@@ -1,25 +1,75 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Animal Quest — Que Bicho É Esse?</title>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐸</text></svg>" />
+  <!-- a fonte Fredoka vem de assets/fonts (ver styles.css): o jogo roda sem internet -->
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
 
-  <div id="fbo"><div class="fbm" id="fbmsg"></div></div>
-  <button id="mutebtn" onclick="toggleMute()">🔊</button>
+  <div id="fbo"><div class="fbm" id="fbmsg" role="status" aria-live="polite"></div></div>
+  <button id="cfgbtn" onclick="toggleCfg()" aria-label="Abrir configurações">⚙️</button>
+  <button id="repetirbtn" onclick="repetirNarracao()" aria-label="Repetir a narração">🔁</button>
   <button class="bbtn" id="backbtn">← VOLTAR</button>
-  <div id="drag-clone"><span class="c-emoji"></span><span class="c-name"></span></div>
 
-  <!-- WORLD 2 UNLOCK POPUP -->
-  <div id="w2-unlock">
-    <div class="w2ul-box">
-      <h1>🌊 MUNDO 2 DESBLOQUEADO!</h1>
-      <p>PARABÉNS! Você aprendeu sobre<br />os 4 animais do Mundo 1!<br /><br />Agora explore a COSTA BRASILEIRA<br />e conheça novos animais incríveis!</p>
-      <button class="pbtn pbtn-cyan" onclick="enterWorld2()">🌊 IR AO MUNDO 2 ▶</button>
+  <!-- ══ CONFIGURAÇÕES ══ -->
+  <div class="helpmdf" id="cfgmdf" role="dialog" aria-label="Configurações">
+    <div class="mbox">
+      <button class="closehelp" onclick="toggleCfg()" aria-label="Fechar configurações">✕</button>
+      <h2>⚙️ Configurações</h2>
+
+      <label class="cfg-row" for="cfg-narracao">
+        <input type="checkbox" id="cfg-narracao" onchange="setNarracao(this.checked)" />
+        <span class="cfg-txt"><b>🗣️ Narração em voz alta</b>
+          <small>Lê as telas, descreve os animais e as opções</small></span>
+      </label>
+      <div class="cfg-aviso" id="cfg-sem-voz" style="display:none">
+        ⚠️ Este navegador não tem voz em português disponível
+      </div>
+
+      <div class="cfg-row">
+        <span class="cfg-txt"><b>🐢 Velocidade da voz</b>
+          <small>Escolha o ritmo da fala</small></span>
+        <div class="cfg-btns">
+          <button type="button" class="cfg-vel-btn" data-vel="0.7" onclick="setVelocidade(0.7)">Devagar</button>
+          <button type="button" class="cfg-vel-btn" data-vel="0.9" onclick="setVelocidade(0.9)">Normal</button>
+          <button type="button" class="cfg-vel-btn" data-vel="1.1" onclick="setVelocidade(1.1)">Rápido</button>
+        </div>
+      </div>
+
+      <label class="cfg-row" for="cfg-sons">
+        <input type="checkbox" id="cfg-sons" onchange="setSons(this.checked)" />
+        <span class="cfg-txt"><b>🔊 Sons dos animais</b>
+          <small>Os áudios gravados de cada bicho</small></span>
+      </label>
+
+      <button class="pbtn pbtn-gold pbtn-sm" onclick="repetirNarracao()">🔁 Repetir narração (tecla R)</button>
+    </div>
+  </div>
+
+  <!-- ══ CONFIRMAÇÃO (antes de apagar o que a criança já fez) ══ -->
+  <div class="helpmdf" id="confmdf" role="alertdialog" aria-modal="true" aria-labelledby="conf-titulo" aria-describedby="conf-txt">
+    <div class="mbox">
+      <h2 id="conf-titulo"></h2>
+      <p class="conf-txt" id="conf-txt"></p>
+      <div class="conf-btns">
+        <button type="button" class="pbtn pbtn-green pbtn-sm" id="conf-nao"></button>
+        <button type="button" class="pbtn pbtn-red pbtn-sm" id="conf-sim"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FINAL DO JOGO -->
+  <div id="fim">
+    <div class="fim-box">
+      <h1>🏆 Você conseguiu!</h1>
+      <p>Parabéns! Você descobriu<br />todos os animais das cavernas!</p>
+      <div class="fim-pontos">👑 <span id="fim-score">0</span> coroas</div>
+      <p>Jogue de novo: as cavernas<br />vão guardar outros animais!</p>
+      <button class="pbtn pbtn-gold" onclick="jogarDeNovo()">🎲 Jogar de novo ▶</button>
     </div>
   </div>
 
@@ -30,97 +80,97 @@
       <div class="intro-box">
         <div class="logo-box">
           <div class="logo-title">🌿 ANIMAL QUEST 🌿</div>
-          <div class="logo-sub">QUE BICHO É ESSE?</div>
+          <div class="logo-sub">Que bicho é esse?</div>
         </div>
         <div class="monkey-wrap">
           <div class="intro-frog frog-down"><div class="frog-player" aria-hidden="true"></div></div>
         </div>
         <div class="feature-list">
-          <div class="feat feat-sound">🔊 &nbsp;ESCUTE OS SONS DOS ANIMAIS</div>
-          <div class="feat feat-shadow">👁️ &nbsp;VEJA AS SOMBRAS MISTERIOSAS</div>
-          <div class="feat feat-biome">🌿 &nbsp;ENCONTRE O BIOMA CERTO</div>
+          <div class="feat feat-sound">🔊 &nbsp;Escute e leia os sons dos animais</div>
+          <div class="feat feat-shadow">👁️ &nbsp;Sombras e pistas dos animais</div>
+          <div class="feat feat-riddle">🧩 &nbsp;Resolva as charadas</div>
         </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
-          <button class="pbtn pbtn-green" onclick="startGame()">▶ JOGAR</button>
-          <button class="pbtn pbtn-cyan pbtn-sm" id="btn-continue" style="display:none" onclick="continueGame()">↩ CONTINUAR</button>
-          <button class="pbtn pbtn-red pbtn-sm" id="btn-reset" onclick="resetGame()">🗑 APAGAR PROGRESSO</button>
+        <div class="intro-btns">
+          <button class="pbtn pbtn-green" onclick="startGame()">▶ Jogar</button>
+          <button class="pbtn pbtn-cyan" id="btn-continue" style="display:none" onclick="continueGame()">↩ Continuar</button>
+          <button class="pbtn pbtn-red pbtn-sm" id="btn-reset" style="display:none" onclick="resetGame()">🗑 Apagar progresso</button>
         </div>
       </div>
     </div>
 
-    <!-- ══ MAPA MUNDO 1 ══ -->
+    <!-- ══ MAPA ══ -->
     <div class="screen map-screen" id="sc-map">
-      <div id="wb1" class="world-badge">🌿 MUNDO 1</div>
-      <div id="map-hud">👑 SCORE <span id="map-score-val">0</span></div>
-      <button id="helpbtn" onclick="toggleHelp(1)">💡</button>
-      <div class="minimap-wrap"><canvas id="minimap" width="120" height="96"></canvas></div>
-      <div class="progress-bar" id="prog1"><div style="font-size:6px;color:var(--gold);margin-bottom:8px">MUNDO 1</div><div id="prog-list1"></div></div>
-      <div class="helpmdf" id="helpmdf1">
+      <div id="wb1" class="world-badge">🌿 Fauna Brasileira</div>
+      <div id="map-hud">👑 <span id="map-score-val">0</span></div>
+      <button id="helpbtn" onclick="toggleHelp()">💡</button>
+      <div class="minimap-wrap"><canvas id="minimap" width="120" height="80"></canvas></div>
+      <div class="progress-bar" id="prog1"><div class="prog-title">Cavernas</div><div id="prog-list"></div></div>
+      <div class="helpmdf" id="helpmdf">
         <div class="mbox">
-          <button class="closehelp" onclick="toggleHelp(1)">✕</button>
-          <h2>📋 COMO JOGAR</h2>
-          <div class="mrow mrow-blue"><b>🕹️ MOVIMENTO</b><p>WASD / SETAS — toque e arraste no celular</p></div>
-          <div class="mrow mrow-green"><b>🚪 ENTRAR NA CAVERNA</b><p>Chegue perto e aperte E ou ENTER<br />Ou toque na caverna</p></div>
-          <div class="mrow mrow-brn"><b>🌳 ÁRVORE SAGRADA</b><p>Complete as 4 cavernas para ir ao Mundo 2!</p></div>
+          <button class="closehelp" onclick="toggleHelp()">✕</button>
+          <h2>📋 Como jogar</h2>
+          <div class="mrow mrow-blue"><b>🕹️ Movimento</b><p>WASD / setas — toque e arraste no celular<br />O sapo só anda pelas trilhas de terra</p></div>
+          <div class="mrow mrow-green"><b>🚪 Entrar na caverna</b><p>Chegue perto e aperte E ou ENTER<br />Ou toque na caverna</p></div>
+          <div class="mrow mrow-brn"><b>🌳 Árvore sagrada</b><p>Complete as <span id="help-total">6</span> cavernas e vá até a árvore!</p></div>
+          <div class="mrow mrow-teal"><b>🎲 Sempre diferente</b><p>Cada partida sorteia outros animais<br />para as cavernas</p></div>
+          <div class="mrow mrow-roxo"><b>🗣️ Jogando pelo som</b><p>Ligue a narração em ⚙️<br />1 2 3 4 — escolhe a resposta<br />R — repete a pergunta<br />S — ouve o bicho de novo<br />ENTER no mapa — entra na caverna</p></div>
         </div>
       </div>
       <div class="world-viewport" id="vp1">
         <div class="world-div" id="world">
           <div id="portals"></div>
-          <div id="tree-portal"><div class="tree-ring"></div><div class="tree-label">🌳 CLIQUE AQUI!<br />MUNDO 2</div></div>
+          <div id="tree-portal"><div class="tree-ring"></div><div class="tree-label">🌳 Clique aqui!<br />Final</div></div>
           <div id="player" class="frog-down"><div class="frog-player" aria-hidden="true"></div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ MAPA MUNDO 2 ══ -->
-    <div class="screen map-screen" id="sc-map2">
-      <div id="wb2" class="world-badge">🌊 MUNDO 2</div>
-      <div id="map-hud2">👑 SCORE <span id="map-score-val2">0</span></div>
-      <button id="helpbtn2" onclick="toggleHelp(2)">💡</button>
-      <div class="minimap-wrap"><canvas id="minimap2" width="120" height="96"></canvas></div>
-      <div class="progress-bar" id="prog2"><div style="font-size:6px;color:#80DEEA;margin-bottom:8px">MUNDO 2</div><div id="prog-list2"></div></div>
-      <div class="helpmdf" id="helpmdf2">
-        <div class="mbox">
-          <button class="closehelp" onclick="toggleHelp(2)">✕</button>
-          <h2>📋 MUNDO 2</h2>
-          <div class="mrow mrow-teal"><b>🌊 NOVOS ANIMAIS!</b><p>Explore a costa, o deserto e o oceano<br />brasileiro!</p></div>
-          <div class="mrow mrow-blue"><b>🕹️ MOVIMENTO</b><p>WASD / SETAS — toque e arraste</p></div>
-          <div class="mrow mrow-green"><b>🚪 CAVERNAS</b><p>Entre nas 4 cavernas do litoral</p></div>
-        </div>
-      </div>
-      <div class="world-viewport" id="vp2">
-        <div class="world-div" id="world2">
-          <div id="portals2"></div>
-          <div id="tree-portal2"><div class="tree-ring"></div><div class="tree-label">🔙 MUNDO 1</div></div>
-          <div id="player2" class="frog-down"><div class="frog-player" aria-hidden="true"></div></div>
         </div>
       </div>
     </div>
 
     <!-- ══ FASE 1: SOM ══ -->
     <div class="screen" id="sc-p1">
-      <div class="ph-title" style="color:#69F0AE">🔊 QUE BICHO É ESSE?</div>
-      <div class="ph-sub">ESCUTE O SOM E ESCOLHA!</div>
-      <button class="sorb" id="sound-orb" onclick="playSound()">🔊</button>
+      <div class="ph-title" style="color:#69F0AE">🔊 Que bicho é esse?</div>
+      <div class="ph-sub">Escute o som e escolha!</div>
+
+      <div class="som-wrap">
+        <button class="sorb" id="sound-orb" onclick="playSound()">🔊</button>
+        <div class="onoma-box">
+          <div class="onoma-label">🔊 O som deste animal é:</div>
+          <div class="onoma-txt" id="p1-onoma"></div>
+        </div>
+      </div>
+
+      <div class="libras-box" id="p1-libras"></div>
+
       <div id="p1grid"></div>
     </div>
 
     <!-- ══ FASE 2: SOMBRA ══ -->
     <div class="screen" id="sc-p2">
-      <div class="ph-title" style="color:#E040FB">👁️ SOMBRA MISTERIOSA</div>
-      <div class="ph-sub" style="color:rgba(255,255,255,.6)">OLHE A SOMBRA E DESCUBRA!</div>
+      <div class="ph-title" style="color:#E040FB">👁️ Sombra misteriosa</div>
+      <div class="ph-sub">Olhe a sombra e descubra!</div>
       <div class="sbox"><div class="sanm" id="shadow-anim"></div><div class="scanl"></div></div>
       <div id="p2grid"></div>
     </div>
 
-    <!-- ══ FASE 3: BIOMA ══ -->
+    <!-- ══ FASE 2b: PERGUNTA DE CARACTERÍSTICA ══ -->
+    <div class="screen" id="sc-p2t">
+      <div class="ph-title" style="color:#80D8FF">🔎 Como é este bicho?</div>
+      <div class="ph-sub">Pense bem e escolha o animal certo!</div>
+      <div class="traco-box">
+        <div class="traco-icone" id="p2t-icone">🔎</div>
+        <p class="traco-txt" id="p2t-pergunta"></p>
+      </div>
+      <div id="p2tgrid"></div>
+    </div>
+
+    <!-- ══ FASE 3: CHARADA ══ -->
     <div class="screen" id="sc-p3">
-      <div class="ph-title" style="color:#80D8FF">🌿 ENCONTRE O BIOMA!</div>
-      <div class="ph-sub" style="color:rgba(255,255,255,.6)">ARRASTE O ANIMAL PARA ONDE ELE VIVE!</div>
-      <div id="p3card"><span class="c-emoji"></span><span class="c-name"></span></div>
-      <button class="pbtn pbtn-gold pbtn-sm" id="hintbtn" onclick="showHint()">💡 DICA</button>
-      <div id="biogrid"></div>
+      <div class="ph-title" style="color:#FFD740">🧩 Charada dos animais</div>
+      <div class="ph-sub">Leia com atenção e adivinhe!</div>
+      <div class="charada-box">
+        <div class="charada-icone">🧩</div>
+        <p class="charada-txt" id="p3-charada"></p>
+      </div>
+      <div id="p3grid"></div>
     </div>
 
     <!-- ══ FASE 4: CELEBRAÇÃO ══ -->
@@ -128,16 +178,18 @@
       <div id="confwrap"></div>
       <div class="p4content">
         <div class="trophy">🏆</div>
-        <div class="p4-congrats">PARABÉNS! 🎉</div>
-        <div id="p4ring"></div>
-        <div id="p4name"></div>
-        <div id="p4fact"></div>
-        <div class="bonus-txt">⭐ +30 BÔNUS! ⭐</div>
-        <button class="pbtn pbtn-green" id="p4btn" style="font-size:9px">PRÓXIMO ANIMAL ▶</button>
+        <div class="p4-congrats">Parabéns! 🎉</div>
+        <div class="p4-sub" id="p4-sub"></div>
+        <div id="p4-animais"></div>
+        <div id="p4-fatos"></div>
+        <div class="bonus-txt">⭐ +30 bônus! ⭐</div>
+        <button class="pbtn pbtn-green" id="p4btn">Próxima caverna ▶</button>
       </div>
     </div>
   </div>
 
+  <script src="js/dados.js"></script>
+  <script src="js/trilhas.js"></script>
   <script src="js/game.js"></script>
 </body>
 </html>

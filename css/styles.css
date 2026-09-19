@@ -1,11 +1,57 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden;background:#000}
-body{font-family:'Press Start 2P',monospace;image-rendering:pixelated}
-:root{--gold:#FFD700;--score-bg:#FFEB3B;--blk:#000}
+
+/* ═══ FONTE ═══
+   Fredoka (arredondada) em tudo, títulos inclusive, por legibilidade.
+   Os arquivos ficam em assets/fonts, dentro do jogo: vinda do Google
+   Fonts, num laboratório sem internet a letra virava outra. É uma fonte
+   variável, então um arquivo serve para todos os pesos. Licença OFL em
+   assets/fonts/OFL.txt (livre, inclusive para distribuir junto). */
+@font-face{
+  font-family:'Fredoka';font-style:normal;font-weight:300 700;font-display:swap;
+  src:url('../assets/fonts/fredoka-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face{
+  font-family:'Fredoka';font-style:normal;font-weight:300 700;font-display:swap;
+  src:url('../assets/fonts/fredoka-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+body{
+  font-family:'Fredoka','Trebuchet MS',sans-serif;
+  font-weight:600;
+  image-rendering:pixelated;
+  /* CAIXA ALTA VEM DAQUI, não do texto no HTML/JS.
+     Leitores de tela soletram letra por letra palavras escritas
+     em maiúsculo no DOM; com text-transform a leitura sai correta. */
+  text-transform:uppercase;
+}
+/* O navegador tira a caixa alta dos botões por conta própria; aqui eles
+   voltam a herdar do body, para nenhum botão novo escapar dela. */
+button{text-transform:inherit}
+
+:root{
+  --gold:#FFD700;--score-bg:#FFEB3B;
+
+  /* ESCALA DE TAMANHOS — piso de 14px em todo o jogo */
+  --fs-xs:clamp(14px,2.2vw,20px);
+  --fs-sm:clamp(18px,3vw,26px);
+  --fs-md:clamp(24px,4vw,36px);
+  --fs-lg:clamp(32px,6vw,52px);
+
+  --emoji-card:clamp(72px,14vw,140px);
+
+}
+
+/* FOCO VISÍVEL — grosso e sempre visível */
+:focus-visible{outline:6px solid var(--gold);outline-offset:4px}
 
 /* ANIMATIONS */
 @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
 @keyframes bsm{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+/* Igual ao bsm, para os balões centralizados com translateX(-50%):
+   sem repetir o -50% aqui, a animação o apaga e o balão sai torto. */
+@keyframes bsmc{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-7px)}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 @keyframes glow{0%,100%{box-shadow:8px 8px 0 #000}50%{box-shadow:8px 8px 0 #000,0 0 0 8px rgba(255,215,0,.6)}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-9px)}40%,80%{transform:translateX(9px)}}
@@ -22,7 +68,7 @@ body{font-family:'Press Start 2P',monospace;image-rendering:pixelated}
 @keyframes treepulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.12)}}
 @keyframes wintrans{0%{opacity:0;transform:scale(.9)}100%{opacity:1;transform:scale(1)}}
 @keyframes trophy{0%,100%{transform:scale(1) rotate(-5deg)}50%{transform:scale(1.15) rotate(5deg)}}
-@keyframes world2enter{0%{opacity:0;filter:brightness(3)}100%{opacity:1;filter:brightness(1)}}
+@keyframes onomapulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
 
 /* CONTAINER */
 #gc{position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden}
@@ -30,181 +76,265 @@ body{font-family:'Press Start 2P',monospace;image-rendering:pixelated}
 .screen.active{display:flex}
 
 /* GLOBAL UI */
-#mutebtn{position:fixed;top:10px;right:10px;width:50px;height:50px;background:var(--gold);border:4px solid #000;box-shadow:4px 4px 0 #000;font-size:22px;cursor:pointer;z-index:9999;display:none}
-.bbtn{position:fixed;top:10px;left:10px;background:#C62828;border:4px solid #000;box-shadow:4px 4px 0 #000;color:#fff;font-family:'Press Start 2P',monospace;font-size:8px;padding:10px 14px;cursor:pointer;z-index:9999;display:none}
+/* Configurações: alcançável de qualquer tela, inclusive das fases */
+#cfgbtn{position:fixed;top:12px;right:12px;width:74px;height:74px;background:var(--gold);border:5px solid #000;box-shadow:5px 5px 0 #000;font-size:var(--fs-md);cursor:pointer;z-index:9999;font-family:inherit;padding:0}
+#cfgbtn:hover{background:#FFE55C}
+/* Repetir narração: só aparece com a narração ligada, nas fases */
+#repetirbtn{position:fixed;bottom:16px;right:16px;width:96px;height:96px;background:#7B1FA2;color:#fff;border:5px solid #000;box-shadow:5px 5px 0 #000;font-size:var(--fs-lg);cursor:pointer;z-index:9999;display:none;font-family:inherit;padding:0}
+#repetirbtn:hover{background:#9C27B0}
+#repetirbtn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 #000}
+.bbtn{position:fixed;top:12px;left:12px;background:#C62828;border:5px solid #000;box-shadow:5px 5px 0 #000;color:#fff;font-family:inherit;font-weight:700;font-size:var(--fs-sm);padding:14px 22px;cursor:pointer;z-index:9999;display:none;text-transform:uppercase}
 .bbtn:hover{background:#E53935}
-#fbo{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;pointer-events:none;z-index:99999;padding-top:70px}
-.fbm{font-size:11px;padding:12px 22px;border:6px solid #000;box-shadow:6px 6px 0 #000;animation:slidein .3s ease;display:none}
+#fbo{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;pointer-events:none;z-index:99999;padding-top:90px}
+.fbm{font-size:var(--fs-md);font-weight:700;padding:18px 34px;border:7px solid #000;box-shadow:7px 7px 0 #000;animation:slidein .3s ease;display:none;text-align:center;max-width:92vw}
 .fbm.ok{background:#C8E6C9;color:#1B5E20}
 .fbm.bad{background:#FFCDD2;color:#B71C1C}
 .fbm.show{display:block}
 
 /* BOTÕES */
-.pbtn{border:6px solid #000;box-shadow:8px 8px 0 #000;padding:16px 32px;font-family:'Press Start 2P',monospace;font-size:14px;cursor:pointer;min-width:180px;text-transform:uppercase;transition:transform .1s,box-shadow .1s}
-.pbtn:active{transform:translate(4px,4px);box-shadow:4px 4px 0 #000}
+.pbtn{border:7px solid #000;box-shadow:9px 9px 0 #000;padding:20px 38px;font-family:inherit;font-weight:700;font-size:var(--fs-md);cursor:pointer;min-width:min(340px,86vw);text-transform:uppercase;transition:transform .1s,box-shadow .1s;line-height:1.3}
+.pbtn:active{transform:translate(4px,4px);box-shadow:5px 5px 0 #000}
 .pbtn-green{background:#43A047;color:#fff}.pbtn-green:hover{background:#66BB6A}
 .pbtn-gold{background:var(--gold);color:#000}.pbtn-gold:hover{background:#FFE55C}
 .pbtn-red{background:#C62828;color:#fff}.pbtn-red:hover{background:#E53935}
 .pbtn-cyan{background:#006064;color:#fff}.pbtn-cyan:hover{background:#00838F}
-.pbtn-sm{font-size:8px;padding:10px 16px;min-width:auto}
+.pbtn-sm{font-size:var(--fs-sm);padding:14px 24px;min-width:min(280px,80vw)}
 
 /* ── INTRO ── */
-#sc-intro{flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,#1a6b3c,#0d3b22 50%,#030a05);overflow:hidden}
-.intro-trees{position:absolute;bottom:0;left:0;right:0;height:120px;pointer-events:none}
-.intro-tree{position:absolute;bottom:0;font-size:32px;opacity:.45;animation:bsm 2s ease-in-out infinite}
-.intro-box{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:18px;max-width:480px;width:90%;padding:24px 20px}
-.logo-box{background:#000;border:6px solid var(--gold);box-shadow:8px 8px 0 var(--gold);padding:14px 22px;text-align:center}
-.logo-title{color:var(--gold);font-size:18px;text-shadow:3px 3px 0 #8B6914;animation:pulse 2s ease infinite}
-.logo-sub{color:#69F0AE;font-size:9px;margin-top:8px}
+#sc-intro{flex-direction:column;align-items:center;justify-content:flex-start;background:radial-gradient(ellipse at 50% 30%,#1a6b3c,#0d3b22 50%,#030a05);overflow-y:auto;overflow-x:hidden}
+.intro-trees{position:fixed;bottom:0;left:0;right:0;height:120px;pointer-events:none;z-index:0}
+.intro-tree{position:absolute;bottom:0;font-size:38px;opacity:.45;animation:bsm 2s ease-in-out infinite}
+.intro-box{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:26px;max-width:760px;width:92%;padding:32px 20px 48px;margin:auto}
+.logo-box{background:#000;border:7px solid var(--gold);box-shadow:9px 9px 0 var(--gold);padding:20px 28px;text-align:center}
+.logo-title{font-weight:700;color:var(--gold);font-size:var(--fs-lg);text-shadow:3px 3px 0 #8B6914;animation:pulse 2s ease infinite;line-height:1.2}
+.logo-sub{color:#69F0AE;font-size:var(--fs-md);font-weight:700;margin-top:14px}
 .monkey-wrap{animation:bounce 1.6s ease-in-out infinite}
-.intro-frog{position:relative;width:150px;height:170px;margin:0 auto}
-.intro-frog .frog-player{bottom:0;transform:translateX(-50%) scale(.8)}
-.feature-list{display:flex;flex-direction:column;gap:10px;width:100%}
-.feat{display:flex;align-items:center;gap:10px;padding:10px 14px;border:3px solid #000;box-shadow:4px 4px 0 #000;font-size:8px;color:#fff}
-.feat-sound{background:#2E7D32}.feat-shadow{background:#4A148C}.feat-biome{background:#E65100}
+.intro-frog{position:relative;width:170px;height:190px;margin:0 auto}
+.intro-frog .frog-player{bottom:0;transform:translateX(-50%) scale(.85)}
+.feature-list{display:flex;flex-direction:column;gap:14px;width:100%}
+.feat{display:flex;align-items:center;gap:12px;padding:18px 22px;border:5px solid #000;box-shadow:5px 5px 0 #000;font-size:var(--fs-sm);font-weight:700;color:#fff;line-height:1.4}
+.feat-sound{background:#2E7D32}.feat-shadow{background:#4A148C}.feat-riddle{background:#E65100}
+.intro-btns{display:flex;flex-direction:column;gap:18px;align-items:center;width:100%}
 
 /* ── MAPA BASE ── */
 .map-screen{overflow:hidden;position:relative}
 .world-viewport{position:absolute;inset:0;overflow:hidden}
-.world-div{position:absolute;top:0;left:0;width:1402px;height:1122px;background-size:1402px 1122px;background-repeat:no-repeat;will-change:transform;background-color:#173b1d}
-#world2{animation:world2enter .8s ease forwards}
+/* transform-origin no canto: o snapCamera amplia o mapa em telas maiores que ele */
+.world-div{position:absolute;top:0;left:0;width:1536px;height:1024px;background-size:1536px 1024px;background-repeat:no-repeat;will-change:transform;background-color:#173b1d;transform-origin:0 0}
 
 /* PORTAIS */
-#portals,#portals2{position:absolute;top:0;left:0;width:1402px;height:1122px;pointer-events:none}
-.portal{position:absolute;width:96px;height:96px;border:6px solid #000;box-shadow:8px 8px 0 #000;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;pointer-events:all;background:rgba(10,30,10,.82);font-family:'Press Start 2P',monospace;transition:transform .15s}
+#portals{position:absolute;top:0;left:0;width:1536px;height:1024px;pointer-events:none}
+.portal{position:absolute;width:150px;height:150px;border:7px solid #000;box-shadow:9px 9px 0 #000;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;pointer-events:all;background:rgba(10,30,10,.86);transition:transform .15s;padding:6px}
 .portal:hover{transform:translate(-50%,-50%) scale(1.06)}
 .portal.ulk{border-color:var(--gold)}
 .portal.lck{border-color:#607D8B;cursor:not-allowed;background:rgba(10,10,10,.8)}
-.portal.don{border-color:#69F0AE;background:rgba(10,40,10,.82)}
+.portal.don{border-color:#69F0AE;background:rgba(10,40,10,.86)}
 .portal.near{animation:glow 1s ease infinite}
-.portal-emoji{font-size:30px;display:block;line-height:1}.portal-shadow{filter:brightness(0);opacity:.85;animation:shdpulse 2s ease-in-out infinite}.portal-name{font-size:5px;color:#fff;margin-top:4px}
-.portal-star{position:absolute;top:-10px;right:-10px;font-size:20px;animation:starpop .5s ease forwards}
-.portal-hint{position:absolute;top:-40px;left:50%;transform:translateX(-50%);background:var(--gold);color:#000;border:3px solid #000;box-shadow:3px 3px 0 #000;padding:4px 8px;font-size:5px;white-space:nowrap;pointer-events:none;animation:bsm 1s ease infinite}
+.portal-emoji{font-size:58px;display:block;line-height:1}
+.portal-trio{font-size:34px;letter-spacing:1px;word-break:break-all;text-align:center}
+.portal-name{font-size:var(--fs-xs);font-weight:700;color:#fff;margin-top:8px;text-align:center;line-height:1.2}
+.portal-star{position:absolute;top:-14px;right:-14px;font-size:34px;animation:starpop .5s ease forwards}
+.portal-hint{position:absolute;top:-56px;left:50%;transform:translateX(-50%);background:var(--gold);color:#000;border:4px solid #000;box-shadow:4px 4px 0 #000;padding:8px 14px;font-size:var(--fs-xs);font-weight:700;white-space:nowrap;pointer-events:none;animation:bsmc 1s ease infinite}
 
 /* TREE PORTAL */
-#tree-portal,#tree-portal2{position:absolute;width:110px;height:110px;transform:translate(-50%,-50%);cursor:default;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Press Start 2P',monospace}
-#tree-portal.unlocked,#tree-portal2.unlocked{pointer-events:all;cursor:pointer;animation:treepulse 1.4s ease infinite}
-.tree-ring{position:absolute;inset:0;border:6px solid transparent;opacity:0;transition:opacity .5s}
+#tree-portal{position:absolute;width:140px;height:140px;transform:translate(-50%,-50%);cursor:default;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#tree-portal.unlocked{pointer-events:all;cursor:pointer;animation:treepulse 1.4s ease infinite}
+.tree-ring{position:absolute;inset:0;border:7px solid transparent;opacity:0;transition:opacity .5s}
 .unlocked .tree-ring{border-color:var(--gold);opacity:1;animation:treeglow 1.4s ease infinite;box-shadow:8px 8px 0 #000}
-.tree-label{position:absolute;top:-56px;left:50%;transform:translateX(-50%);background:var(--gold);color:#000;border:3px solid #000;box-shadow:3px 3px 0 #000;padding:6px 10px;font-size:5px;white-space:nowrap;opacity:0;pointer-events:none;text-align:center;line-height:1.8}
-.unlocked .tree-label{opacity:1;animation:bsm 1s ease infinite}
+.tree-label{position:absolute;top:-82px;left:50%;transform:translateX(-50%);background:var(--gold);color:#000;border:4px solid #000;box-shadow:4px 4px 0 #000;padding:10px 16px;font-size:var(--fs-xs);font-weight:700;white-space:nowrap;opacity:0;pointer-events:none;text-align:center;line-height:1.5}
+.unlocked .tree-label{opacity:1;animation:bsmc 1s ease infinite}
 
 /* PLAYER */
-#player,#player2{position:absolute;width:78px;height:90px;transform:translate(-50%,-100%);z-index:60;pointer-events:none}
+#player{position:absolute;width:78px;height:90px;transform:translate(-50%,-100%);z-index:60;pointer-events:none}
 .frog-player{position:absolute;left:50%;bottom:-4px;width:180px;height:210px;transform:translateX(-50%) scale(.43);transform-origin:bottom center;background:url("../assets/images/sapo-sprite.png") no-repeat 0 0;background-size:720px 840px;filter:drop-shadow(0 8px 2px rgba(0,0,0,.35))}
 .frog-down .frog-player{background-position:0 0}.frog-up .frog-player{background-position:0 -210px}.frog-left .frog-player{background-position:0 -420px}.frog-right .frog-player{background-position:0 -630px}
-.walk.frog-down .frog-player{animation:frogWalkDown .68s steps(1) infinite}.walk.frog-up .frog-player{animation:frogWalkUp .68s steps(1) infinite}.walk.frog-left .frog-player{animation:frogWalkLeft .68s steps(1) infinite}.walk.frog-right .frog-player{animation:frogWalkRight .68s steps(1) infinite}
+.walk.frog-down .frog-player{animation:frogWalkDown .92s steps(1) infinite}.walk.frog-up .frog-player{animation:frogWalkUp .92s steps(1) infinite}.walk.frog-left .frog-player{animation:frogWalkLeft .92s steps(1) infinite}.walk.frog-right .frog-player{animation:frogWalkRight .92s steps(1) infinite}
 
 /* MAP HUD */
-#map-hud,#map-hud2{position:fixed;top:10px;left:50%;transform:translateX(-50%);background:var(--score-bg);border:4px solid #000;box-shadow:4px 4px 0 #000;padding:8px 16px;font-size:9px;z-index:1000;white-space:nowrap;pointer-events:none}
-#helpbtn,#helpbtn2{width:50px;height:50px;background:var(--gold);border:4px solid #000;box-shadow:4px 4px 0 #000;font-size:20px;cursor:pointer;font-family:'Press Start 2P',monospace;position:fixed;top:10px;right:70px;z-index:1000}
+#map-hud{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:var(--score-bg);border:5px solid #000;box-shadow:5px 5px 0 #000;padding:12px 24px;font-size:var(--fs-md);font-weight:700;z-index:1000;white-space:nowrap;pointer-events:none}
+#helpbtn{width:74px;height:74px;background:var(--gold);border:5px solid #000;box-shadow:5px 5px 0 #000;font-size:var(--fs-md);cursor:pointer;font-family:inherit;position:fixed;top:12px;right:100px;z-index:1000}
 
 /* MINIMAP */
-.minimap-wrap{position:fixed;bottom:16px;left:16px;z-index:1000;border:4px solid #000;box-shadow:4px 4px 0 #000;background:rgba(0,0,0,.8)}
+.minimap-wrap{position:fixed;bottom:16px;left:16px;z-index:1000;border:5px solid #000;box-shadow:5px 5px 0 #000;background:rgba(0,0,0,.8);line-height:0}
 
 /* PROGRESS */
-.progress-bar{position:fixed;bottom:16px;right:16px;background:rgba(0,0,0,.88);border:4px solid #000;box-shadow:4px 4px 0 #000;padding:12px;z-index:1000;font-size:6px;color:#fff;max-width:180px}
-.prog-item{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.prog-dot{width:14px;height:14px;border:2px solid #000;flex-shrink:0}
+.progress-bar{position:fixed;bottom:16px;right:16px;background:rgba(0,0,0,.9);border:5px solid #000;box-shadow:5px 5px 0 #000;padding:16px;z-index:1000;font-size:var(--fs-xs);font-weight:700;color:#fff;max-width:min(320px,45vw)}
+.prog-title{font-size:var(--fs-xs);color:var(--gold);margin-bottom:12px}
+.prog-title-2{color:#80DEEA}
+.prog-item{display:flex;align-items:center;gap:10px;margin-bottom:10px;line-height:1.2}
+.prog-dot{width:20px;height:20px;border:3px solid #000;flex-shrink:0}
 .prog-dot.done{background:#69F0AE}.prog-dot.todo{background:#607D8B}
 
 /* WORLD BADGE */
-.world-badge{position:fixed;top:10px;left:10px;z-index:1000;padding:8px 12px;border:4px solid #000;box-shadow:4px 4px 0 #000;font-size:7px;color:#fff}
+.world-badge{position:fixed;top:12px;left:12px;z-index:1000;padding:12px 18px;border:5px solid #000;box-shadow:5px 5px 0 #000;font-size:var(--fs-xs);font-weight:700;color:#fff}
 #wb1{background:#1B5E20}
-#wb2{background:#006064}
 
 /* MODAL AJUDA */
-.helpmdf{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:5000;display:none;align-items:center;justify-content:center}
+.helpmdf{position:fixed;inset:0;background:rgba(0,0,0,.86);z-index:5000;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 .helpmdf.open{display:flex}
-.mbox{background:var(--gold);border:8px solid #000;box-shadow:14px 14px 0 #000;padding:24px;max-width:420px;width:90%;position:relative;font-size:8px}
-.mbox h2{font-size:12px;margin-bottom:16px;color:#000}
-.mrow{padding:10px 12px;margin-bottom:10px;border:4px solid #000;font-size:7px}
+.mbox{background:var(--gold);border:8px solid #000;box-shadow:14px 14px 0 #000;padding:32px;max-width:640px;width:100%;position:relative;font-size:var(--fs-sm);margin:auto}
+.mbox h2{font-size:var(--fs-md);margin-bottom:22px;color:#000}
+.mrow{padding:16px 18px;margin-bottom:14px;border:5px solid #000;font-size:var(--fs-sm)}
+.mrow b{font-size:var(--fs-sm)}
 .mrow-blue{background:#1565C0;color:#fff}.mrow-green{background:#2E7D32;color:#fff}
 .mrow-brn{background:#5D4037;color:#fff}
 .mrow-teal{background:#006064;color:#fff}
-.mrow p{margin-top:6px;line-height:1.8}
-.closehelp{position:absolute;top:-6px;right:-6px;width:40px;height:40px;background:#C62828;border:4px solid #000;box-shadow:4px 4px 0 #000;font-size:16px;cursor:pointer;font-family:'Press Start 2P',monospace}
+.mrow-roxo{background:#4A148C;color:#fff}
+.mrow p{margin-top:10px;line-height:1.5;font-weight:500}
+.closehelp{position:absolute;top:-10px;right:-10px;width:62px;height:62px;background:#C62828;border:5px solid #000;box-shadow:5px 5px 0 #000;font-size:var(--fs-md);color:#fff;cursor:pointer;font-family:inherit}
 
-/* ── FASES ── */
+/* ── CONFIGURAÇÕES ── */
+.cfg-row{display:flex;align-items:center;gap:16px;padding:16px 18px;margin-bottom:14px;border:5px solid #000;background:#000;color:#fff;cursor:pointer;flex-wrap:wrap}
+.cfg-row input[type=checkbox]{width:44px;height:44px;flex-shrink:0;accent-color:#43A047;cursor:pointer;margin:0}
+.cfg-row input[type=checkbox]:disabled{cursor:not-allowed;opacity:.4}
+.cfg-txt{display:flex;flex-direction:column;gap:6px;flex:1 1 200px}
+.cfg-txt b{font-size:var(--fs-sm);color:var(--gold);line-height:1.3}
+.cfg-txt small{font-size:var(--fs-xs);color:rgba(255,255,255,.8);font-weight:500;line-height:1.4}
+.cfg-btns{display:flex;gap:10px;flex-wrap:wrap}
+.cfg-vel-btn{background:#37474F;color:#fff;border:4px solid #000;box-shadow:3px 3px 0 #000;padding:12px 16px;font-family:inherit;font-weight:700;font-size:var(--fs-xs);cursor:pointer;text-transform:uppercase}
+.cfg-vel-btn:hover{background:#546E7A}
+.cfg-vel-btn.sel{background:#43A047;box-shadow:0 0 0 4px var(--gold),3px 3px 0 #000}
+.cfg-aviso{background:#C62828;color:#fff;border:4px solid #000;padding:14px 16px;margin-bottom:14px;font-size:var(--fs-xs);font-weight:700;line-height:1.4}
+
+/* ── CONFIRMAÇÃO ── */
+.conf-txt{font-size:var(--fs-sm);font-weight:600;color:#000;line-height:1.5;margin-bottom:26px}
+.conf-btns{display:flex;flex-direction:column;align-items:center;gap:18px}
+
+/* ── FASES — base comum ── */
+#sc-p1,#sc-p2,#sc-p2t,#sc-p3{flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;overflow-x:hidden;padding:100px 20px 40px;gap:24px}
+.ph-title{font-weight:700;font-size:var(--fs-md);border:6px solid #000;box-shadow:7px 7px 0 #000;padding:18px 26px;text-align:center;line-height:1.25;background:rgba(0,0,0,.55);max-width:96vw}
+.ph-sub{font-size:var(--fs-sm);font-weight:700;color:rgba(255,255,255,.85);text-align:center}
+
+/* GRID DE OPÇÕES — comum às 3 fases */
+#p1grid,#p2grid,#p2tgrid,#p3grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;max-width:900px}
+/* Célula da opção: o card e, na fase do som, o alto-falante ao lado dele.
+   O movimento do hover e o tremido do erro ficam na célula, para os dois
+   botões andarem juntos. */
+.optcel{position:relative;display:flex;transition:transform .15s}
+.optcel:hover{transform:translateY(-8px) scale(1.04)}
+#p2grid .optcel:hover{transform:rotate(3deg) scale(1.06)}
+.optcel.treme{animation:shake .5s ease}
+/* Imagem do bicho (campo `imagem` em dados.js): 1em, igual ao emoji */
+.fig{width:1em;height:1em;object-fit:contain;display:inline-block;vertical-align:middle;pointer-events:none}
+/* .optcard é um <button>: precisa zerar o estilo nativo do navegador */
+.optcard{position:relative;border:7px solid #000;box-shadow:6px 6px 0 #000;min-height:clamp(160px,24vh,260px);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:10px;transition:transform .15s;padding:14px;
+  width:100%;font-family:inherit;color:inherit;background:none;-webkit-appearance:none;appearance:none;text-align:center;text-transform:uppercase}
+/* O foco precisa saltar aos olhos: é como a criança sabe onde está */
+.optcard:focus-visible{outline:8px solid var(--gold);outline-offset:6px;transform:scale(1.04)}
+.optcard .c-emoji{font-size:var(--emoji-card);line-height:1}
+.optcard .c-name{font-size:var(--fs-md);font-weight:700;text-align:center;line-height:1.2}
+
 /* P1 SOM */
-#sc-p1{flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;background:linear-gradient(160deg,#081f08,#1B5E20,#2E7D32);padding:70px 16px 24px;gap:18px}
-#sc-p1.world2-theme{background:linear-gradient(160deg,#002f35,#006064,#00838F)}
-.ph-title{font-size:13px;border:5px solid #000;box-shadow:6px 6px 0 #000;padding:12px 20px;text-align:center}
-.ph-sub{font-size:7px;color:rgba(255,255,255,.75)}
-.sorb{width:110px;height:110px;background:radial-gradient(circle,#43A047,#1B5E20);border:8px solid #000;box-shadow:10px 10px 0 #000;font-size:50px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#sc-p1{background:linear-gradient(160deg,#081f08,#1B5E20,#2E7D32)}
+.som-wrap{display:flex;align-items:center;justify-content:center;gap:24px;flex-wrap:wrap;width:100%;max-width:900px}
+.sorb{width:clamp(130px,20vw,180px);height:clamp(130px,20vw,180px);background:radial-gradient(circle,#43A047,#1B5E20);border:8px solid #000;box-shadow:10px 10px 0 #000;font-size:clamp(60px,10vw,90px);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sorb:hover{transform:scale(1.08) rotate(-8deg)}.sorb.play{animation:pulse .25s ease infinite}
-#sc-p1.world2-theme .sorb{background:radial-gradient(circle,#00838F,#004D40)}
-#p1grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:480px}
-.p1card{border:6px solid #000;box-shadow:4px 4px 0 #000;background:#fff;min-height:128px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:6px;transition:transform .15s}
-.p1card:hover{transform:translateY(-8px) scale(1.04)}
-.p1card .c-emoji{font-size:48px}.p1card .c-name{font-size:7px;color:#000}
+.onoma-box{background:#FFF9C4;border:7px solid #000;box-shadow:8px 8px 0 #000;padding:18px 26px;text-align:center;flex:1 1 320px;min-width:min(320px,100%)}
+.onoma-label{font-size:var(--fs-xs);font-weight:700;color:#5D4037;margin-bottom:10px}
+.onoma-txt{font-size:var(--fs-lg);font-weight:700;color:#BF360C;line-height:1.2;animation:onomapulse 1.8s ease infinite;word-break:break-word}
+.libras-box{width:100%;max-width:900px;min-height:clamp(90px,14vh,140px);background:rgba(0,0,0,.45);border:6px dashed rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;padding:16px;text-align:center}
+.libras-aviso{font-size:var(--fs-sm);font-weight:700;color:rgba(255,255,255,.85);line-height:1.4}
+.libras-box video{max-height:clamp(140px,26vh,260px);max-width:100%;border:5px solid #000;background:#000}
+/* Alto-falante no card: ouvir aquele animal sem escolher o card */
+.card-som{position:absolute;top:10px;right:10px;width:clamp(56px,9vw,72px);height:clamp(56px,9vw,72px);background:var(--gold);border:4px solid #000;box-shadow:3px 3px 0 #000;font-size:clamp(24px,4vw,34px);line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;padding:0;z-index:2}
+.card-som:hover{background:#FFE55C}
+.card-som:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
+.card-som.play{background:#69F0AE;animation:pulse .25s ease infinite}
+
+.p1card{background:#fff}
+.p1card .c-name{color:#000}
 .p1card.ok{background:#C8E6C9;border-color:#2E7D32}
-.p1card.ng{animation:shake .5s ease;background:#FFCDD2;border-color:#B71C1C}
+.p1card.ng{background:#FFCDD2;border-color:#B71C1C}
 
 /* P2 SOMBRA */
-#sc-p2{flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;background:linear-gradient(160deg,#0d001f,#4A148C,#6A1B9A);padding:70px 16px 24px;gap:18px}
-#sc-p2.world2-theme{background:linear-gradient(160deg,#0a1628,#0D47A1,#1565C0)}
-.sbox{width:220px;height:220px;border:8px solid #000;box-shadow:10px 10px 0 #000;background:radial-gradient(circle,#FFD740,#FF6D00);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-#sc-p2.world2-theme .sbox{background:radial-gradient(circle,#80DEEA,#006064)}
-.sanm{font-size:128px;filter:brightness(0);opacity:.85;animation:shdpulse 2s ease-in-out infinite;user-select:none}
+#sc-p2{background:linear-gradient(160deg,#0d001f,#4A148C,#6A1B9A)}
+.sbox{width:clamp(300px,52vw,480px);height:clamp(300px,52vw,480px);border:8px solid #000;box-shadow:10px 10px 0 #000;background:radial-gradient(circle,#FFB300,#E65100);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+/* brightness(0) achata o emoji num vulto preto; os 4 drop-shadow
+   desenham o contorno claro em volta, que é o que dá a forma. */
+.sanm{font-size:clamp(160px,34vw,340px);opacity:.9;animation:shdpulse 2s ease-in-out infinite;user-select:none;line-height:1;
+  filter:brightness(0)
+    drop-shadow(5px 0 0 #FFFDE7) drop-shadow(-5px 0 0 #FFFDE7)
+    drop-shadow(0 5px 0 #FFFDE7) drop-shadow(0 -5px 0 #FFFDE7)}
 .scanl{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.07) 0,rgba(0,0,0,.07) 1px,transparent 1px,transparent 4px);pointer-events:none}
-#p2grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:480px}
-.p2card{border:6px solid #000;box-shadow:4px 4px 0 #000;min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:6px;transition:transform .15s}
-.p2card:hover{transform:rotate(4deg) scale(1.08)}
-.p2card .c-emoji{font-size:40px}.p2card .c-name{font-size:7px;color:#fff}
-.p2card.ok{outline:6px solid #69F0AE}.p2card.ng{animation:shake .5s ease}
+.p2card .c-name{color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.65)}
+.p2card.ok{outline:8px solid #69F0AE;outline-offset:-2px}
 
-/* P3 BIOMA */
-#sc-p3{flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;background:linear-gradient(160deg,#0D47A1,#1565C0);padding:70px 16px 24px;gap:16px}
-#sc-p3.world2-theme{background:linear-gradient(160deg,#1a237e,#283593)}
-#p3card{width:154px;height:154px;border:7px solid #000;box-shadow:8px 8px 0 #000;background:#fff;cursor:grab;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;flex-shrink:0;user-select:none;transition:transform .15s}
-#p3card .c-emoji{font-size:68px}#p3card .c-name{font-size:8px;color:#000}
-#p3card.drag{opacity:.5;transform:scale(1.1) rotate(10deg);cursor:grabbing}
-#biogrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:480px}
-.bdrop{border:7px solid #000;min-height:128px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:box-shadow .15s;position:relative;padding:10px}
-.bdrop:hover{box-shadow:0 0 0 4px var(--gold),6px 6px 0 #000}
-.bdrop.over{box-shadow:0 0 0 5px var(--gold)}.bdrop.cflsh{animation:flsh .4s ease}
-.bdrop.wflsh{animation:shake .4s ease}
-.b-amz{background:linear-gradient(160deg,#1B5E20,#2E7D32)}
-.b-mat{background:linear-gradient(160deg,#33691E,#558B2F)}
-.b-cer{background:linear-gradient(160deg,#E65100,#BF360C)}
-.b-pan{background:linear-gradient(160deg,#01579B,#0277BD)}
-.b-cat{background:linear-gradient(160deg,#6D4C41,#4E342E)}
-.b-mac{background:linear-gradient(160deg,#2E7D32,#1B5E20)}
-.b-man{background:linear-gradient(160deg,#004D40,#00695C)}
-.b-oce{background:linear-gradient(160deg,#006064,#0277BD)}
-.bdrop .b-icon{font-size:30px}.bdrop .b-name{font-size:6px;color:#fff;font-weight:bold;text-align:center}
-.bdrop .b-desc{font-size:5px;color:rgba(255,255,255,.75);text-align:center;line-height:1.6}
-.bdrop-placed{position:absolute;bottom:6px;right:6px;font-size:22px;animation:starpop .4s ease}
-.hint-arrow{font-size:7px;color:var(--gold);margin-top:4px;animation:bsm .8s ease infinite}
-#hintbtn{margin-top:6px;display:none}
-#hintbtn.show{display:block}
+/* P3 CHARADA */
+#sc-p3{background:linear-gradient(160deg,#4A2600,#BF360C,#E65100)}
+.charada-box{display:flex;align-items:center;gap:22px;background:#FFF9C4;border:8px solid #000;box-shadow:10px 10px 0 #000;padding:26px 30px;width:100%;max-width:900px}
+.charada-icone{font-size:clamp(50px,9vw,86px);line-height:1;flex-shrink:0}
+.charada-txt{font-size:var(--fs-md);font-weight:700;color:#3E2723;line-height:1.5;text-align:left}
+.p3card{background:#fff}
+.p3card .c-name{color:#000}
+.p3card.ok{background:#C8E6C9;border-color:#2E7D32}
+.p3card.ng{background:#FFCDD2;border-color:#B71C1C}
+
+/* P2b PERGUNTA DE CARACTERISTICA */
+#sc-p2t{background:linear-gradient(160deg,#00363A,#00695C,#00897B)}
+.traco-box{display:flex;align-items:center;gap:22px;background:#E0F7FA;border:8px solid #000;box-shadow:10px 10px 0 #000;padding:26px 30px;width:100%;max-width:900px}
+.traco-icone{font-size:clamp(50px,9vw,86px);line-height:1;flex-shrink:0}
+.traco-txt{font-size:var(--fs-md);font-weight:700;color:#004D40;line-height:1.5;text-align:left}
+.p2tcard{background:#fff}
+.p2tcard .c-name{color:#000}
+.p2tcard.ok{background:#C8E6C9;border-color:#2E7D32}
+.p2tcard.ng{background:#FFCDD2;border-color:#B71C1C}
 
 /* P4 CELEBRAÇÃO */
-#sc-p4{flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;background:radial-gradient(circle at 50% 40%,#1A237E,#050A1A);padding:24px 16px;position:relative;gap:14px}
-#sc-p4.world2-theme{background:radial-gradient(circle at 50% 40%,#006064,#001a1a)}
+#sc-p4{flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;overflow-x:hidden;background:radial-gradient(circle at 50% 40%,#1A237E,#050A1A);padding:32px 20px 48px;position:relative}
 #confwrap{position:absolute;inset:0;pointer-events:none;overflow:hidden}
-.p4content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:14px}
-.trophy{font-size:78px;animation:trophy 1.6s ease infinite}
-.p4-congrats{color:var(--gold);font-size:18px;text-shadow:3px 3px 0 #8B6914}
-#p4ring{width:200px;height:200px;border:8px solid var(--gold);box-shadow:8px 8px 0 #000;display:flex;align-items:center;justify-content:center;font-size:120px;animation:pulse 2s ease infinite}
-#p4name{background:#000;border:5px solid var(--gold);box-shadow:6px 6px 0 var(--gold);padding:10px 20px;color:var(--gold);font-size:16px}
-#p4fact{background:rgba(255,255,255,.1);border:4px solid rgba(255,255,255,.2);padding:14px;font-size:7px;color:#fff;max-width:400px;text-align:center;line-height:2}
-.bonus-txt{color:var(--gold);font-size:11px;animation:pulse 1s ease infinite}
+.p4content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:20px;margin:auto;width:100%;max-width:760px}
+.trophy{font-size:clamp(70px,12vw,110px);animation:trophy 1.6s ease infinite;line-height:1}
+.p4-congrats{font-weight:700;color:var(--gold);font-size:var(--fs-lg);text-shadow:3px 3px 0 #8B6914;text-align:center;line-height:1.2}
+/* Os 3 animais descobertos na caverna, lado a lado */
+.p4-sub{color:#fff;font-size:var(--fs-md);font-weight:700;text-align:center}
+#p4-animais{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;width:100%}
+.p4-animal{flex:1 1 200px;max-width:260px;background:#000;border:6px solid var(--gold);box-shadow:7px 7px 0 var(--gold);padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;animation:starpop .45s ease backwards}
+.p4-animal:nth-child(2){animation-delay:.12s}
+.p4-animal:nth-child(3){animation-delay:.24s}
+.p4a-emoji{font-size:clamp(64px,13vw,120px);line-height:1}
+.p4a-nome{color:var(--gold);font-size:var(--fs-md);font-weight:700;text-align:center;line-height:1.2}
+.p4a-som{color:#FFF9C4;font-size:var(--fs-xs);font-weight:600;text-align:center;line-height:1.3}
+#p4-fatos{display:flex;flex-direction:column;gap:12px;width:100%}
+.p4-fato{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.12);border:4px solid rgba(255,255,255,.28);padding:14px 18px;font-size:var(--fs-xs);font-weight:600;color:#fff;line-height:1.5;text-align:left}
+.p4f-emoji{font-size:clamp(34px,6vw,52px);line-height:1;flex-shrink:0}
+.bonus-txt{color:var(--gold);font-size:var(--fs-md);font-weight:700;animation:pulse 1s ease infinite}
 
-/* DRAG CLONE */
-#drag-clone{position:fixed;width:100px;height:100px;border:5px solid #000;box-shadow:6px 6px 0 #000;background:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;pointer-events:none;z-index:9000;opacity:.8}
-#drag-clone .c-emoji{font-size:48px}#drag-clone .c-name{font-size:6px}
+/* OVERLAY DE FINAL DE JOGO */
+#fim{position:fixed;inset:0;z-index:8000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.88);padding:20px;overflow-y:auto}
+#fim.show{display:flex}
+.fim-box{background:#1B5E20;border:8px solid var(--gold);box-shadow:16px 16px 0 var(--gold);padding:38px 32px;text-align:center;max-width:680px;width:100%;animation:wintrans .6s ease;margin:auto}
+.fim-box h1{color:var(--gold);font-size:var(--fs-lg);margin-bottom:22px;line-height:1.3}
+.fim-box p{color:#fff;font-size:var(--fs-sm);font-weight:600;line-height:1.7;margin-bottom:30px}
+.fim-pontos{display:inline-block;background:var(--score-bg);color:#000;border:5px solid #000;box-shadow:5px 5px 0 #000;padding:12px 26px;font-size:var(--fs-md);font-weight:700;margin-bottom:30px}
 
-/* WORLD 2 UNLOCK OVERLAY */
-#w2-unlock{position:fixed;inset:0;z-index:8000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.85)}
-#w2-unlock.show{display:flex}
-.w2ul-box{background:#006064;border:8px solid var(--gold);box-shadow:16px 16px 0 var(--gold);padding:32px;text-align:center;max-width:440px;animation:wintrans .6s ease}
-.w2ul-box h1{color:var(--gold);font-size:16px;margin-bottom:14px}
-.w2ul-box p{color:#fff;font-size:8px;line-height:2.2;margin-bottom:20px}
+/* ── TELAS DEITADAS E BAIXAS (notebook 1366x768, 1280x720) ──
+   Numa coluna só, o botão JOGAR ficava abaixo da dobra e a criança
+   precisava rolar para achar. Em duas colunas tudo cabe na tela. */
+@media(min-width:900px) and (max-height:820px){
+  .intro-box{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"logo feat" "sapo btns";align-items:center;justify-items:center;gap:22px 40px;max-width:1160px;padding:24px 20px}
+  .logo-box{grid-area:logo}
+  /* a coluna é estreita: sem isto o 🌿 do fim caía sozinho na linha de baixo */
+  .logo-title{font-size:clamp(28px,3.2vw,46px);white-space:nowrap}
+  .monkey-wrap{grid-area:sapo}
+  .feature-list{grid-area:feat}
+  .intro-btns{grid-area:btns}
+}
 
-@media(max-width:500px){
-  .logo-title{font-size:13px}
-  #p1grid,#p2grid,#biogrid{gap:8px}
-  .p1card{min-height:100px}
+/* ── TELAS ESTREITAS: uma coluna só ── */
+@media(max-width:640px){
+  /* No celular o placar, a ajuda e as configurações se amontoavam no
+     topo: o selo do mundo é só enfeite e sai, e o placar vai para a esquerda */
+  .world-badge{display:none}
+  #map-hud{left:12px;transform:none;padding:12px 18px}
+  #p1grid,#p2grid,#p2tgrid,#p3grid{grid-template-columns:1fr;gap:16px}
+  .optcard{min-height:clamp(130px,18vh,190px);flex-direction:row;gap:20px;justify-content:flex-start;padding:16px 22px}
+  .optcard .c-emoji{font-size:clamp(64px,18vw,100px)}
+  .optcard .c-name{text-align:left}
+  /* no layout deitado o nome corre por baixo do alto-falante */
+  .p1card{padding-right:clamp(72px,17vw,96px)}
+  .charada-box,.traco-box{flex-direction:column;gap:14px;padding:22px}
+  .charada-txt,.traco-txt{text-align:center}
+  #sc-p1,#sc-p2,#sc-p2t,#sc-p3{padding:90px 14px 32px;gap:18px}
+  .progress-bar{display:none}
+  #helpbtn{right:96px}
 }

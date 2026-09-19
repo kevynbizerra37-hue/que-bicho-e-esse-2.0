@@ -1,149 +1,274 @@
-// ========= DADOS — MUNDO 1 =========
-const ANIMALS1 = [
-  { id:'arara',  name:'ARARA',  emoji:'🦜', sound:'assets/sounds/arara.mp3',
-    color:'linear-gradient(135deg,#1565C0,#FFD700)', biome:'amz',
-    fact:'A arara vive na Floresta Amazônica! 🌳 Ela ama árvores altíssimas e frutas tropicais.' },
-  { id:'onca',   name:'ONÇA',   emoji:'🐆', sound:'assets/sounds/onca.mp3',
-    color:'linear-gradient(135deg,#FFD700,#FF8F00)', biome:'pan',
-    fact:'A onça-pintada caça no Pantanal! 💧 É o maior felino das Américas.' },
-  { id:'flamingo', name:'FLAMINGO', emoji:'🦩', sound:'assets/sounds/flamingo.mp3',
-    color:'linear-gradient(135deg,#FF8F00,#E53935)', biome:'mat',
-    fact:'O flamingo habita a Mata Atlântica! 🌿 Sua cor rosa vem dos alimentos que ele come.' },
-  { id:'macaco', name:'MACACO', emoji:'🐵', sound:'assets/sounds/macaco.mp3',
-    color:'linear-gradient(135deg,#FF8F00,#6D4C41)', biome:'amz',
-    fact:'O macaco-prego vive na Floresta Amazônica! 🌳 Ele usa pedras para quebrar cocos.' },
-];
+// ═══════════════════════════════════════════════════════════════
+//  LÓGICA DO JOGO
+//  Os animais e o mapa ficam em js/dados.js. Este arquivo não conhece
+//  nenhum animal pelo nome: quais deles vão para as cavernas é
+//  sorteado a cada partida.
+// ═══════════════════════════════════════════════════════════════
 
-// ========= DADOS — MUNDO 2 =========
-const ANIMALS2 = [
-  { id:'mico',     name:'MICO-LEÃO', emoji:'🦁', sound:'assets/sounds/mico.mp3',
-    color:'linear-gradient(135deg,#FFD700,#FF8F00)', biome:'mac',
-    fact:'O mico-leão-dourado vive na Mata Costeira! 🌿 É um dos animais mais ameaçados do Brasil.' },
-  { id:'tatu',     name:'TATU',      emoji:'🦔', sound:'assets/sounds/tatu.mp3',
-    color:'linear-gradient(135deg,#8D6E63,#5D4037)', biome:'cat',
-    fact:'O tatu vive na Caatinga! 🌵 Sua armadura de osso o protege dos predadores.' },
-  { id:'capivara', name:'CAPIVARA',  emoji:'🦫', sound:'assets/sounds/capirava.mp3',
-    color:'linear-gradient(135deg,#795548,#4E342E)', biome:'man',
-    fact:'A capivara vive nos Manguezais! 💦 É o maior roedor do mundo!' },
-  { id:'tartaruga',name:'TARTARUGA', emoji:'🐢', sound:'assets/sounds/tartaruga.mp3',
-    color:'linear-gradient(135deg,#006064,#0277BD)', biome:'oce',
-    fact:'A tartaruga-marinha nada no Oceano Atlântico! 🌊 Ela volta à mesma praia onde nasceu para desovar.' },
-];
-
-const BIOMES1 = {
-  amz:{ id:'amz', name:'AMAZÔNIA',       icon:'🌳', cssClass:'b-amz', desc:'Floresta tropical úmida',    hint:'Floresta com muita chuva e rios' },
-  mat:{ id:'mat', name:'MATA ATLÂNTICA', icon:'🌿', cssClass:'b-mat', desc:'Costa leste do Brasil',       hint:'Montanhas cobertas de floresta' },
-  cer:{ id:'cer', name:'CERRADO',        icon:'🌵', cssClass:'b-cer', desc:'Savana brasileira',            hint:'Gramíneas e árvores retorcidas' },
-  pan:{ id:'pan', name:'PANTANAL',       icon:'💧', cssClass:'b-pan', desc:'Maior área alagada do mundo', hint:'Rios, lagos e terrenos alagados' },
-};
-const BIOMES2 = {
-  mac:{ id:'mac', name:'MATA COSTEIRA',  icon:'🌿', cssClass:'b-mac', desc:'Floresta úmida do litoral',   hint:'Floresta junto ao mar' },
-  cat:{ id:'cat', name:'CAATINGA',       icon:'🌵', cssClass:'b-cat', desc:'Semiárido nordestino',        hint:'Solo seco e plantas espinhosas' },
-  man:{ id:'man', name:'MANGUEZAL',      icon:'🦀', cssClass:'b-man', desc:'Entre o mar e o rio',         hint:'Raízes dentro da água salgada' },
-  oce:{ id:'oce', name:'OCEANO',         icon:'🌊', cssClass:'b-oce', desc:'Mar aberto do Brasil',        hint:'Águas salgadas do Atlântico' },
-};
-
-// Cavernas Mundo 1 (baseado em 1402×1122)
-const PORTALS1 = [
-  { x:244, y:154 },   // Floresta → Arara
-  { x:1218, y:154 },  // Pantanal  → Onça
-  { x:1185, y:958 },  // Mata Atlântica → Flamingo
-  { x:215, y:956 },   // Amazônia  → Macaco
-];
-const TREE1 = { x:680, y:544 };
-
-// Cavernas Mundo 2 (baseado em 1402×1122)
-const PORTALS2 = [
-  { x:164, y:158 },   // Floresta costeira → Mico-leão
-  { x:690, y:745 },   // Buraco no solo    → Tatu
-  { x:681, y:158 },   // Deserto/Caatinga  → Capivara
-  { x:1288, y:505 },  // Caverna aquática  → Tartaruga
-];
-const TREE2 = { x:300, y:720 };
-
-// Dimensões do mundo (podem ser ajustadas após carregar a imagem)
-let WW = 1402, WH = 1122;
-const MAP_DIM = { 1:{w:1402,h:1122}, 2:{w:1402,h:1122} };
+// Dimensões do mapa (ajustadas ao carregar a imagem)
+let MAPA_W = 1536, MAPA_H = 1024;
+// A imagem do mapa, guardada para o minimapa desenhar o cenário de verdade
+let MAPA_IMG = null;
 
 // ========= ESTADO =========
+// Cada caverna tem 3 etapas — som, sombra e charada (setupP1/P2/P3),
+// e cada etapa é sobre um animal DIFERENTE.
+const FASES_POR_CAVERNA = 3;
+
 const G = {
   screen:'intro',
-  world:1,
-  idx:0,
+  idx:0,                          // caverna em que a criança está
+  fase:0,                         // etapa dentro da caverna (0,1,2)
   score:0, combo:0,
-  done1:[], done2:[],
+  fases:[],                       // fases[caverna][etapa] = id do animal
+  variantes:[],                   // 'sombra' ou 'traco' na 2a etapa de cada caverna
+  pergunta:null,                  // pergunta de caracteristica em curso
+  done:[],                        // índices das cavernas concluídas
   firstTry:true, muted:false, audio:null,
+  etapa:0,                        // muda a cada troca de tela (ver showSc)
+  travado:false,                  // já acertou; esperando a próxima etapa
   keys:{}, raf:null,
-  px1:680, py1:640,
-  px2:330, py2:760,
+  px:MAPA.inicio.x, py:MAPA.inicio.y,
   vx:0, vy:0,
   camx:0, camy:0,
-  p3tries:0,
   _walkTimer:null,
+  _somEl:null,                    // quem está mostrando "tocando agora"
   webAudio:{ctx:null, nodes:[]},
 };
 
 // Helpers
-function curAnimals(){ return G.world===1 ? ANIMALS1 : ANIMALS2; }
-function curBiomes(){ return G.world===1 ? BIOMES1  : BIOMES2; }
-function curDone(){   return G.world===1 ? G.done1  : G.done2; }
-function curPortals(){return G.world===1 ? PORTALS1 : PORTALS2; }
-function curTree(){   return G.world===1 ? TREE1    : TREE2; }
-function curPX(){     return G.world===1 ? G.px1    : G.px2; }
-function curPY(){     return G.world===1 ? G.py1    : G.py2; }
-function curPlayerEl(){ return document.getElementById(G.world===1?'player':'player2'); }
-function curMapSc(){    return G.world===1?'map':'map2'; }
+function totalCavernas(){ return MAPA.cavernas.length; }
+function animaisDaCaverna(i){ return (G.fases[i]||[]).map(id=>ANIMAIS[id]).filter(Boolean); }
+function animalDaFase(caverna, fase){ const c=G.fases[caverna]; return c ? ANIMAIS[c[fase]] : null; }
+function animalAtual(){ return animalDaFase(G.idx, G.fase); }
+function tudoCompleto(){ return G.done.length>=totalCavernas(); }
+function cavernaAberta(i){ return i===0 || G.done.includes(i-1); }
+// "a Arara", "o Tatu" — sem `artigo` na ficha, fala só o nome
+function comArtigo(a){ return a.artigo ? `${a.artigo} ${a.nome}` : a.nome; }
+// O desenho do bicho: a `imagem` da ficha quando houver, senão o emoji.
+// A imagem mede 1em, então herda o tamanho que cada tela já dá ao emoji.
+function figura(a){
+  return a.imagem ? `<img class="fig" src="${a.imagem}" alt="" draggable="false">` : a.emoji;
+}
+// Carrega as imagens das fichas logo na abertura (a sombra não pisca ao
+// aparecer) e, se alguma não abrir, aquele bicho volta a usar o emoji em
+// vez de mostrar o ícone de imagem quebrada.
+function conferirImagens(){
+  todosAnimais().forEach(a=>{
+    if(!a.imagem) return;
+    const img=new Image();
+    img.onerror=()=>{
+      console.warn(`Imagem não encontrada: ${a.imagem} — ${a.nome} vai usar o emoji.`);
+      a.imagem=null;
+    };
+    img.src=a.imagem;
+  });
+}
+
+// ========= SORTEIO DAS CAVERNAS =========
+// Cada caverna recebe 3 animais DIFERENTES entre si, um por etapa, e
+// tudo muda a cada partida. As cavernas são idênticas por fora, então
+// não dá para decorar nem deduzir o que vem pela frente.
+//
+// O "baralho" é o catálogo embaralhado; quando acaba, embaralha de novo.
+// Isso espalha os animais por igual em vez de deixar alguns saírem toda
+// hora e outros quase nunca.
+const _chave = f => JSON.stringify(f);
+function sortearFases(){
+  const catalogo=todosAnimais().map(a=>a.id);
+  const porCaverna=Math.min(FASES_POR_CAVERNA, catalogo.length);
+  const anterior=_chave(G.fases);
+  let sorteio=[];
+  for(let tent=0;tent<10;tent++){
+    let deck=[]; sorteio=[];
+    for(let c=0;c<totalCavernas();c++){
+      const daCaverna=[];
+      while(daCaverna.length<porCaverna){
+        if(!deck.length) deck=shuffle(catalogo);
+        // pega o primeiro do baralho que ainda não saiu NESTA caverna
+        const k=deck.findIndex(id=>!daCaverna.includes(id));
+        if(k===-1){ deck=shuffle(catalogo); continue; }
+        daCaverna.push(deck.splice(k,1)[0]);
+      }
+      sorteio.push(daCaverna);
+    }
+    if(_chave(sorteio)!==anterior) break;   // não repetir a partida anterior
+  }
+  G.fases=sorteio;
+  // Cada caverna sorteia se a 2ª etapa será a sombra ou a pergunta de
+  // característica. Com a narração ligada, varianteEtapa2() força a
+  // pergunta — a sombra não é jogável sem enxergar.
+  G.variantes=sortearVariantes();
+  save();
+}
+function sortearVariantes(){
+  return MAPA.cavernas.map(()=> Math.random()<0.5 ? 'sombra' : 'traco');
+}
+function varianteEtapa2(){
+  if(VOZ.ligada) return 'traco';
+  return G.variantes[G.idx]==='traco' ? 'traco' : 'sombra';
+}
 
 // ========= SAVE / LOAD =========
 function save(){
   try{
     localStorage.setItem('aq_score',G.score);
-    localStorage.setItem('aq_done1',JSON.stringify(G.done1));
-    localStorage.setItem('aq_done2',JSON.stringify(G.done2));
+    localStorage.setItem('aq_done',JSON.stringify(G.done));
+    localStorage.setItem('aq_fases',JSON.stringify(G.fases));
+    localStorage.setItem('aq_variantes',JSON.stringify(G.variantes));
   }catch(e){}
 }
 function load(){
   try{
-    const s = localStorage.getItem('aq_score');
-    const d1= localStorage.getItem('aq_done1');
-    const d2= localStorage.getItem('aq_done2');
+    const s=localStorage.getItem('aq_score');
+    const d=localStorage.getItem('aq_done');
+    const f=localStorage.getItem('aq_fases');
     if(s) G.score=parseInt(s)||0;
-    if(d1) G.done1=JSON.parse(d1)||[];
-    if(d2) G.done2=JSON.parse(d2)||[];
+    // Só cavernas que existem e sem repetir: um número a mais aqui fazia
+    // tudoCompleto() liberar a árvore antes da hora.
+    if(d){
+      const lista=JSON.parse(d);
+      G.done=Array.isArray(lista)
+        ? [...new Set(lista)].filter(i=>Number.isInteger(i) && i>=0 && i<totalCavernas())
+        : [];
+    }
+    if(f){
+      const ids=JSON.parse(f)||[];
+      // Só reaproveita o sorteio salvo se os animais ainda existirem em
+      // dados.js — senão o jogo quebraria depois de trocar o catálogo.
+      // Matriz valida: uma linha por caverna, etapas distintas entre si
+      // e todos os animais ainda existindo no catalogo.
+      const valido = Array.isArray(ids) && ids.length===totalCavernas()
+        && ids.every(c=>Array.isArray(c) && c.length===FASES_POR_CAVERNA
+              && c.every(id=>ANIMAIS[id]) && new Set(c).size===c.length);
+      if(valido) G.fases=ids;
+    }
+    const vs=JSON.parse(localStorage.getItem('aq_variantes')||'null');
+    if(Array.isArray(vs) && vs.length===totalCavernas()
+       && vs.every(v=>v==='sombra'||v==='traco')) G.variantes=vs;
   }catch(e){}
+  if(G.fases.length!==totalCavernas()){
+    G.fases=[]; G.done=[]; sortearFases();
+  } else if(G.variantes.length!==totalCavernas()){
+    // Save de antes das variantes existirem: sorteia só elas, sem apagar
+    // as cavernas que a criança já fez.
+    G.variantes=sortearVariantes();
+    save();
+  }
+  G.fase=0;
 }
+function temProgresso(){ return G.done.length>0 || G.score>0; }
+// "as 2 cavernas que você já fez e as 150 coroas"
+function oQueSePerde(){
+  const n=G.done.length, partes=[];
+  if(n) partes.push(n===1 ? 'a caverna que você já fez' : `as ${n} cavernas que você já fez`);
+  if(G.score) partes.push(`as ${G.score} coroas`);
+  return partes.join(' e ');
+}
+// Continuar e Apagar só aparecem quando existe o que continuar ou apagar
+function atualizarBotoesIntro(){
+  const mostrar=temProgresso() ? 'block' : 'none';
+  document.getElementById('btn-continue').style.display=mostrar;
+  document.getElementById('btn-reset').style.display=mostrar;
+}
+// Um clique sem querer em "Apagar progresso" jogava tudo fora: agora pergunta
 function resetGame(){
+  if(!temProgresso()) return;
+  perguntar({
+    titulo:'Apagar o progresso?',
+    texto:`Você vai perder ${oQueSePerde()}.`,
+    sim:'Sim, apagar', nao:'Não, voltar',
+    fala:'Aperte ENTER para voltar sem apagar, ou TAB e depois ENTER para apagar.',
+    aoConfirmar:apagarProgresso,
+  });
+}
+function apagarProgresso(){
   try{
     localStorage.removeItem('aq_score');
-    localStorage.removeItem('aq_done1');
-    localStorage.removeItem('aq_done2');
+    localStorage.removeItem('aq_done');
+    localStorage.removeItem('aq_fases');
+    localStorage.removeItem('aq_variantes');
   }catch(e){}
-  G.score=0; G.done1=[]; G.done2=[]; G.world=1;
-  document.getElementById('btn-continue').style.display='none';
+  G.score=0; G.done=[]; G.idx=0; G.fase=0;
+  G.px=MAPA.inicio.x; G.py=MAPA.inicio.y;
+  sortearFases();
+  atualizarBotoesIntro();
   feedback('Progresso apagado!', true);
+}
+
+// ========= CONFIRMAÇÃO =========
+// "Tem certeza?" no estilo do jogo e narrado, no lugar do confirm() do
+// navegador. O botão de desistir vem primeiro e já com o foco: um ENTER
+// apressado nunca apaga nada.
+function perguntar({titulo, texto, sim, nao, fala, aoConfirmar}){
+  const m=document.getElementById('confmdf');
+  const bSim=document.getElementById('conf-sim'), bNao=document.getElementById('conf-nao');
+  document.getElementById('conf-titulo').textContent=titulo;
+  document.getElementById('conf-txt').textContent=texto;
+  bSim.textContent=sim; bNao.textContent=nao;
+  const voltar=document.activeElement;
+  const fechar=()=>{
+    m.classList.remove('open');
+    pararNarracao();
+    // devolve o foco a quem abriu a pergunta, se ele ainda estiver na tela
+    if(voltar && voltar.offsetParent && voltar.focus) voltar.focus();
+  };
+  bNao.onclick=fechar;
+  bSim.onclick=()=>{ fechar(); aoConfirmar(); };
+  bNao.onfocus=()=>{ if(!_focoProgramatico) narrar(nao, {guardar:false}); };
+  bSim.onfocus=()=>{ if(!_focoProgramatico) narrar(sim, {guardar:false}); };
+  m.classList.add('open');
+  _focoProgramatico=true;
+  try{ bNao.focus(); } finally { _focoProgramatico=false; }
+  narrar(`${titulo} ${texto} ${fala}`);
+}
+// Com a janela aberta o Tab só alterna entre os dois botões: sem isto o
+// foco escapava para os botões da tela de trás, escondidos pelo fundo escuro.
+function prenderFocoNaConfirmacao(e){
+  if(e.key!=='Tab') return;
+  e.preventDefault();
+  const bSim=document.getElementById('conf-sim'), bNao=document.getElementById('conf-nao');
+  (document.activeElement===bNao ? bSim : bNao).focus();
 }
 
 // ========= NAVEGAÇÃO =========
 function showSc(id){
   const prev=G.screen;
   if(prev==='p1' && id!=='p1') stopAnimalAudio();
+  if(prev!==id) pararNarracao();      // não deixa a fala da tela anterior vazar
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('sc-'+id).classList.add('active');
   G.screen=id;
-  const onMap = id==='map'||id==='map2';
-  document.getElementById('mutebtn').style.display= onMap?'block':'none';
-  document.getElementById('backbtn').style.display= ['p1','p2','p3','p4'].includes(id)?'block':'none';
-  ['p1','p2','p3','p4'].forEach(p=>{
-    const el=document.getElementById('sc-'+p);
-    if(el) el.classList.toggle('world2-theme', G.world===2);
-  });
+  G.etapa++; G.travado=false;
+  document.getElementById('backbtn').style.display= ['p1','p2','p2t','p3','p4'].includes(id)?'block':'none';
+  atualizarBotaoRepetir();
+  if(id==='map' && prev!=='map') narrarMapa();
+}
+
+// No mapa a criança cega não tem como guiar o sapo pelo cenário, então
+// com a narração ligada ela pode ir direto à próxima caverna com ENTER.
+function narrarMapa(){
+  if(!VOZ.ligada || fimAberto()) return;
+  const prox=proximaCaverna();
+  if(prox===null){
+    narrar('Mapa. Você completou todas as cavernas! Aperte ENTER para ver o final.');
+  } else {
+    narrar(`Mapa. Você completou ${G.done.length} de ${totalCavernas()} cavernas. `
+      +`Aperte ENTER para entrar na caverna ${prox+1}.`);
+  }
+}
+function proximaCaverna(){
+  for(let i=0;i<totalCavernas();i++){
+    if(!G.done.includes(i) && cavernaAberta(i)) return i;
+  }
+  return null;
 }
 
 // ========= HUD =========
 function updateHUD(){
-  const ids=['map-score-val','map-score-val2'];
-  ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=G.score; });
-  drawProg(1); drawProg(2);
+  const el=document.getElementById('map-score-val');
+  if(el) el.textContent=G.score;
+  drawProg();
 }
 function addPts(n){ G.score+=n; save(); updateHUD(); }
 
@@ -167,17 +292,26 @@ function stopWebAudio(){
   G.webAudio.nodes.forEach(n=>{ try{ n.stop ? n.stop() : (n.gain && (n.gain.value=0)); }catch(e){} });
   G.webAudio.nodes=[];
 }
+// Só um elemento por vez mostra que está tocando: o orbe grande da fase
+// ou o botão de som de um card.
+function marcarTocando(el){
+  if(G._somEl && G._somEl!==el) G._somEl.classList.remove('play');
+  G._somEl = el || null;
+  if(el) el.classList.add('play');
+}
+// Cada som tocado ganha um número; parar ou trocar o som muda o número,
+// e os avisos atrasados do som antigo (fim, erro) passam a ser ignorados.
+let _somId=0;
 function stopAnimalAudio(){
+  _somId++;
   if(G.audio){ try{ G.audio.pause(); G.audio.currentTime=0; }catch(e){} G.audio=null; }
   stopWebAudio();
-  const orb=document.getElementById('sound-orb');
-  if(orb) orb.classList.remove('play');
+  marcarTocando(null);
 }
 function playBeepSequence(seq=[{f:440,d:0.2}]){
   const ctx=ensureAudioCtx(); if(!ctx) return;
   if(ctx.state==='suspended') ctx.resume();
-  const now=ctx.currentTime;
-  let t=now;
+  let t=ctx.currentTime;
   seq.forEach(step=>{
     const osc=ctx.createOscillator(); const gain=ctx.createGain();
     osc.type='square'; osc.frequency.value=step.f;
@@ -190,46 +324,251 @@ function playBeepSequence(seq=[{f:440,d:0.2}]){
     t+=step.d+0.03;
   });
 }
-function animalTone(animalId){
-  // Pequenas assinaturas sonoras por animal (fallback)
-  const A=(...f)=>f.map(x=>({f:x,d:0.18}));
-  switch(animalId){
-    case 'arara': return A(880,660,990,660,880);
-    case 'onca': return A(220,220,196,174,220);
-    case 'flamingo': return A(523,659,784,659,523);
-    case 'macaco': return A(392,440,494,440,392);
-    case 'mico': return A(660,784,988,784,660);
-    case 'tatu': return A(196,220,247,220,196);
-    case 'capivara': return A(262,330,392,330,262);
-    case 'tartaruga': return A(330,294,262,294,330);
-    default: return A(440,660,440);
-  }
+// Assinatura sonora de reserva, usada se o arquivo .mp3 falhar.
+// As frequências vêm do campo `tom` do animal em dados.js.
+function animalTone(animal){
+  const tons = (animal && animal.tom && animal.tom.length) ? animal.tom : [440,660,440];
+  return tons.map(f=>({f:f, d:0.18}));
+}
+// ═══════════════════════════════════════════════════════════════
+//  CANAL ÚNICO DE ÁUDIO
+// ═══════════════════════════════════════════════════════════════
+//  TODO som do jogo passa por aqui — voz, mp3 do bicho e bipes de
+//  reserva. Só um item toca por vez: quem entra interrompe o que
+//  estava tocando, e numa sequência cada item espera o anterior
+//  acabar de verdade (pelo evento de fim, não por tempo chutado).
+const AUDIO = { fila:[], token:0, repetir:null };
+
+function silenciarTudo(){
+  AUDIO.token++;               // invalida os callbacks da sequência anterior
+  AUDIO.fila=[];
+  pararFala();
+  stopAnimalAudio();
 }
 
-function playSound(){
-  if(G.muted) return;
-  const orb=document.getElementById('sound-orb');
-  if(orb) orb.classList.add('play');
+// itens: {fala}, {som, el}, {espera:ms}, {acao:fn} — nesta ordem.
+// `repetivel` guarda a sequência inteira para o botão de repetir, para
+// a criança ouvir de novo o enunciado, o som do bicho E as opções.
+function tocarSequencia(itens, {repetivel=false}={}){
+  silenciarTudo();
+  const lista=(itens||[]).filter(Boolean);
+  if(repetivel) AUDIO.repetir=lista.slice();
+  AUDIO.fila=lista;
+  seguirFila(AUDIO.token);
+}
+function seguirFila(meu){
+  if(meu!==AUDIO.token) return;          // outra sequência assumiu o canal
+  const item=AUDIO.fila.shift();
+  if(!item) return;
+  const seguir=()=>{ if(meu===AUDIO.token) seguirFila(meu); };
+  if(item.fala!==undefined)   falarAgora(item.fala, item, seguir);
+  else if(item.som)           tocarSomAgora(item.som, item.el, seguir);
+  else if(item.espera)        setTimeout(seguir, item.espera);
+  else if(item.acao){ item.acao(); seguir(); }
+  else seguir();
+}
+
+// Algumas gravações passam de um minuto (a do macaco tem 70s). Todas
+// começam no primeiro segundo, então 8s bastam para ouvir o bicho; depois
+// disso o som abaixa e para, e a sequência segue.
+const LIMITE_SOM_MS=8000;
+
+// Toca UM som de animal e avisa quando ele realmente terminou.
+function tocarSomAgora(animal, elVisual, aoFim){
+  if(G.muted || !animal){ aoFim(); return; }
+  const meu=++_somId;
+  const vale=()=>meu===_somId;          // ninguém parou nem trocou este som
+  marcarTocando(elVisual);
+  let acabou=false, limite=null, reservaUsada=false;
+  const fim=()=>{
+    if(acabou) return; acabou=true;
+    clearTimeout(limite);
+    // Para o áudio de verdade: antes a sequência seguia e o som continuava
+    // tocando por baixo da narração seguinte.
+    if(vale()){
+      if(G.audio){ try{ G.audio.pause(); }catch(_){} G.audio=null; }
+      marcarTocando(null);
+    }
+    aoFim();
+  };
+  // Se o mp3 falhar, os bipes de reserva duram ~1s — só depois seguimos.
+  // Não toca se o som já foi parado: pause() faz o play() pendente falhar
+  // com AbortError, e aí os bipes saíam por cima do som seguinte.
+  const reserva=()=>{
+    if(acabou || reservaUsada || !vale()) return;
+    reservaUsada=true;
+    try{ playBeepSequence(animalTone(animal)); }catch(_){}
+    setTimeout(fim,1100);
+  };
+  limite=setTimeout(()=>{
+    const au=G.audio;
+    if(!vale() || !au){ fim(); return; }
+    let vol=1;
+    const abaixa=setInterval(()=>{
+      vol-=0.1;
+      if(vol<=0 || !vale()){ clearInterval(abaixa); fim(); }
+      else { try{ au.volume=vol; }catch(_){} }
+    },40);
+  }, LIMITE_SOM_MS);
   try{
-    if(G.audio){G.audio.pause();G.audio=null;}
-    const a=curAnimals()[G.idx];
-    const au=new Audio(a.sound);
+    const au=new Audio(animal.som);
     G.audio=au;
-    // Caso ocorra falha ao tocar (arquivo inexistente), usar WebAudio
-    const onFail=()=>{ try{ playBeepSequence(animalTone(a.id)); }catch(_){} };
-    au.onerror=onFail;
-    au.play().catch(()=>{ onFail(); });
-    au.onended=()=>{ if(orb) orb.classList.remove('play'); };
-    // safety
-    setTimeout(()=>{ if(orb) orb.classList.remove('play'); }, 4000);
-  }catch(e){
-    setTimeout(()=>{ if(orb) orb.classList.remove('play'); },1500);
+    au.onended=fim;
+    au.onerror=reserva;
+    au.play().catch(reserva);
+  }catch(e){ reserva(); }
+}
+
+// Toca o som de QUALQUER animal — o da fase, ou o de um card que a
+// criança queira comparar antes de escolher. Interrompe o que tocava.
+function tocarSom(animal, elVisual){
+  if(G.travado) return;       // não corta o "acertou" nem a troca de etapa
+  tocarSequencia([{som:animal, el:elVisual}]);
+}
+// Som do animal da fase atual (o orbe grande)
+function playSound(){
+  tocarSom(animalAtual(), document.getElementById('sound-orb'));
+}
+// ═══════════════════════════════════════════════════════════════
+//  NARRAÇÃO / AUDIODESCRIÇÃO
+// ═══════════════════════════════════════════════════════════════
+//  Lê as telas em voz alta com a Web Speech API, para a criança cega.
+//  O texto de cada animal vem do campo `audiodescricao` em dados.js.
+//  Liga e desliga nas configurações; a escolha fica salva no navegador.
+const VOZ = {
+  ligada:false,
+  velocidade:0.9,        // o padrão 1.0 é rápido demais para os pequenos
+  voz:null,
+  ultimo:'',             // último enunciado, para o botão de repetir
+};
+function vozDisponivel(){
+  return typeof speechSynthesis!=='undefined' && typeof SpeechSynthesisUtterance!=='undefined';
+}
+// As vozes chegam de forma assíncrona no Chrome; por isso o onvoiceschanged.
+function escolherVoz(){
+  if(!vozDisponivel()) return;
+  let vs=[];
+  try{ vs=speechSynthesis.getVoices()||[]; }catch(e){ return; }
+  VOZ.voz = vs.find(v=>/^pt[-_]br/i.test(v.lang))
+         || vs.find(v=>/^pt/i.test(v.lang))
+         || null;
+}
+// Fala UM texto e avisa quando terminou. Só o canal de áudio chama.
+function falarAgora(texto, opts, aoFim){
+  if(!VOZ.ligada || !vozDisponivel() || !texto){ aoFim(); return; }
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(texto);
+    u.lang='pt-BR'; u.rate=VOZ.velocidade; u.pitch=1.05;
+    if(VOZ.voz) u.voice=VOZ.voz;
+    let acabou=false, vigia=null;
+    const fim=()=>{
+      if(acabou) return; acabou=true;
+      clearTimeout(vigia);
+      if(VOZ._falando===u) VOZ._falando=null;
+      aoFim();
+    };
+    u.onend=fim; u.onerror=fim;
+    // O Chrome joga fora a fala que ninguém mais referencia e aí o onend
+    // nunca chega; guardando aqui, ela vive até terminar.
+    VOZ._falando=u;
+    // Vigia: se mesmo assim o fim não vier (falas longas às vezes param
+    // sozinhas), a sequência segue em vez de travar a criança na fase.
+    vigia=setTimeout(fim, 4000 + texto.length*110/VOZ.velocidade);
+    speechSynthesis.speak(u);
+    if(opts.guardar!==false) VOZ.ultimo=texto;
+  }catch(e){ aoFim(); }
+}
+// `guardar:false` para falas passageiras (foco, acerto/erro) que não
+// devem virar o alvo do botão "repetir".
+// Com a narração desligada não faz nada: antes ela silenciava o canal
+// sem ter o que falar, e um Tab ou um clique errado cortava o som do bicho.
+function narrar(texto, {guardar=true, aoTerminar=null}={}){
+  if(!VOZ.ligada){ if(aoTerminar) aoTerminar(); return; }
+  tocarSequencia([{fala:texto, guardar}, aoTerminar?{acao:aoTerminar}:null]);
+}
+function pararFala(){
+  if(!vozDisponivel()) return;
+  try{ speechSynthesis.cancel(); }catch(e){}
+}
+// Mantido pelo nome antigo: agora silencia o canal inteiro, não só a voz.
+function pararNarracao(){ silenciarTudo(); }
+function repetirNarracao(){
+  if(G.travado) return;
+  if(AUDIO.repetir && AUDIO.repetir.length){
+    tocarSequencia(AUDIO.repetir.slice(), {repetivel:true});
+  } else if(VOZ.ultimo){
+    narrar(VOZ.ultimo);
   }
 }
-function toggleMute(){
-  G.muted=!G.muted;
-  document.getElementById('mutebtn').textContent=G.muted?'🔇':'🔊';
+// Monta "Opção 1: arara. Opção 2: onça. ..." a partir do grid montado.
+function listaDeOpcoes(gridId){
+  const el=document.getElementById(gridId); if(!el) return '';
+  const nomes=[...el.querySelectorAll('.optcard')].map(c=>c.dataset.nome).filter(Boolean);
+  if(!nomes.length) return '';
+  return 'Aperte o número da resposta. '
+    + nomes.map((n,i)=>`${i+1}, ${n}`).join('. ')+'.';
+}
+
+// ========= CONFIGURAÇÕES =========
+function toggleCfg(){
+  const m=document.getElementById('cfgmdf');
+  m.classList.toggle('open');
+  if(m.classList.contains('open')) narrar('Configurações abertas.', {guardar:false});
+}
+function setNarracao(ligada){
+  VOZ.ligada=!!ligada;
+  salvarConfig();
+  atualizarBotaoRepetir();
+  if(VOZ.ligada){
+    // O clique na caixa já é o gesto que o navegador exige para falar.
+    narrar('Narração ligada. Aperte o número da resposta para escolher, '
+      +'R para repetir a pergunta, e S para ouvir o bicho de novo.', {guardar:false});
+  } else {
+    pararNarracao();
+  }
+}
+function setVelocidade(v){
+  VOZ.velocidade=v;
+  salvarConfig();
+  marcarVelocidade();
+  narrar('Velocidade da voz ajustada.', {guardar:false});
+}
+function setSons(ligados){
+  G.muted=!ligados;
+  salvarConfig();
   if(G.muted) stopAnimalAudio();
+}
+function marcarVelocidade(){
+  document.querySelectorAll('.cfg-vel-btn').forEach(b=>{
+    b.classList.toggle('sel', parseFloat(b.dataset.vel)===VOZ.velocidade);
+  });
+}
+function atualizarBotaoRepetir(){
+  const b=document.getElementById('repetirbtn'); if(!b) return;
+  const naFase=['p1','p2','p2t','p3','p4'].includes(G.screen);
+  b.style.display=(VOZ.ligada && naFase)?'block':'none';
+}
+function salvarConfig(){
+  try{
+    localStorage.setItem('aq_voz',JSON.stringify({ligada:VOZ.ligada, velocidade:VOZ.velocidade}));
+    localStorage.setItem('aq_mudo',JSON.stringify(G.muted));
+  }catch(e){}
+}
+function carregarConfig(){
+  try{
+    const v=JSON.parse(localStorage.getItem('aq_voz')||'null');
+    if(v){
+      VOZ.ligada=!!v.ligada;
+      if(typeof v.velocidade==='number') VOZ.velocidade=v.velocidade;
+    }
+    const m=JSON.parse(localStorage.getItem('aq_mudo')||'null');
+    if(typeof m==='boolean') G.muted=m;
+  }catch(e){}
+  const cn=document.getElementById('cfg-narracao'); if(cn) cn.checked=VOZ.ligada;
+  const cs=document.getElementById('cfg-sons');     if(cs) cs.checked=!G.muted;
+  marcarVelocidade();
+  atualizarBotaoRepetir();
 }
 
 // ========= INTRO =========
@@ -239,69 +578,74 @@ function buildIntroBG(){
   ['🌳','🌲','🌴','🌿','🌳','🌲','🌴','🌿','🌳','🌲','🌴','🌿'].forEach((t,i)=>{
     const d=document.createElement('div');
     d.className='intro-tree'; d.textContent=t;
-    d.style.cssText=`left:${4+i*8.2}%;font-size:${22+Math.random()*20}px;opacity:${(.3+Math.random()*.35).toFixed(2)};animation-delay:${Math.random()*2}s`;
+    d.style.cssText=`left:${4+i*8.2}%;font-size:${28+Math.random()*24}px;opacity:${(.3+Math.random()*.35).toFixed(2)};animation-delay:${Math.random()*2}s`;
     c.appendChild(d);
   });
 }
 
+// "Jogar" com cavernas já feitas apagava tudo sem avisar (e ainda mantinha
+// as coroas da partida anterior): agora pergunta antes.
 function startGame(){
-  G.world=1; applyWorldSize(1);
-  buildPortals(1); positionPlayer(1); snapCamera(1,true); drawMini(1); updateHUD();
+  if(temProgresso()){
+    perguntar({
+      titulo:'Começar do zero?',
+      texto:`Você vai perder ${oQueSePerde()}. Para seguir de onde parou, escolha Continuar.`,
+      sim:'Sim, começar do zero', nao:'Não, voltar',
+      fala:'Aperte ENTER para voltar, ou TAB e depois ENTER para começar do zero.',
+      aoConfirmar:comecarPartida,
+    });
+    return;
+  }
+  comecarPartida();
+}
+function comecarPartida(){
+  // Partida nova: outro sorteio de animais e o placar volta a zero
+  G.score=0; G.done=[]; G.idx=0; G.fase=0; sortearFases();
+  G.px=MAPA.inicio.x; G.py=MAPA.inicio.y; G.vx=0; G.vy=0;
+  aplicarTamanhoMapa();
+  buildPortals(); positionPlayer(); snapCamera(true); drawMini(); updateHUD();
   showSc('map'); startLoop();
 }
 function continueGame(){
-  if(G.done1.length>=4){
-    G.world=2; applyWorldSize(2);
-    buildPortals(2); positionPlayer(2); snapCamera(2,true); drawMini(2); showSc('map2');
-  } else { startGame(); }
-  startLoop();
+  aplicarTamanhoMapa();
+  buildPortals(); positionPlayer(); snapCamera(true); drawMini(); updateHUD();
+  showSc('map'); startLoop();
 }
 
-// ========= PORTAIS =========
-function buildPortals(w){
-  const animals = w===1 ? ANIMALS1 : ANIMALS2;
-  const done    = w===1 ? G.done1  : G.done2;
-  const portPos = w===1 ? PORTALS1 : PORTALS2;
-  const tree    = w===1 ? TREE1    : TREE2;
-  const cont    = document.getElementById(w===1?'portals':'portals2');
+// ========= CAVERNAS =========
+function buildPortals(){
+  const cont=document.getElementById('portals');
   cont.querySelectorAll('.portal').forEach(p=>p.remove());
 
-  portPos.forEach((pos,i)=>{
-    const a=animals[i]; const isDone=done.includes(i); const isUlk=(i===0)||done.includes(i-1);
+  MAPA.cavernas.forEach((pos,i)=>{
+    const feito=G.done.includes(i); const aberta=cavernaAberta(i);
     const div=document.createElement('div');
-    div.className='portal '+(isDone?'don':isUlk?'ulk':'lck');
-    div.id='portal'+(w===1?'':'2')+'-'+i; div.style.left=pos.x+'px'; div.style.top=pos.y+'px'; div.dataset.idx=i;
-    if(isDone){
-      div.innerHTML=`<span class="portal-emoji">${a.emoji}</span><span class="portal-name">${a.name}</span><span class="portal-star">⭐</span>`;
-    } else if(isUlk){
-      div.innerHTML=`<span class="portal-emoji portal-shadow">${a.emoji}</span><span class="portal-name">???</span>`;
-      div.onclick=()=>enterLevel(i);
+    div.className='portal '+(feito?'don':aberta?'ulk':'lck');
+    div.id='portal-'+i; div.style.left=pos.x+'px'; div.style.top=pos.y+'px'; div.dataset.idx=i;
+    if(feito){
+      const achados=animaisDaCaverna(i);
+      div.innerHTML=`<span class="portal-emoji portal-trio">${achados.map(figura).join('')}</span>`
+        +`<span class="portal-name">${achados.length} animais</span><span class="portal-star">⭐</span>`;
     } else {
-      div.innerHTML=`<span class="portal-emoji portal-shadow">${a.emoji}</span><span class="portal-name" style="color:#90A4AE">???</span>`;
+      // Cavernas fechadas são todas iguais: nada aqui pode revelar o
+      // animal, senão a criança já entra sabendo a resposta.
+      div.innerHTML=`<span class="portal-emoji">${aberta?'❓':'🔒'}</span><span class="portal-name">Caverna ${i+1}</span>`;
+      if(aberta) div.onclick=()=>enterLevel(i);
     }
     cont.appendChild(div);
   });
 
-  const tp=document.getElementById(w===1?'tree-portal':'tree-portal2');
-  tp.style.left=tree.x+'px'; tp.style.top=tree.y+'px';
-  checkTreeUnlock(w);
-}
-function checkTreeUnlock(w){
-  const done=w===1?G.done1:G.done2; const animals=w===1?ANIMALS1:ANIMALS2;
-  const tp=document.getElementById(w===1?'tree-portal':'tree-portal2'); if(!tp) return;
-  if(w===2){
-    tp.classList.add('unlocked');
-    tp.onclick=()=>backToWorld1();
-    return;
-  }
-  const all=done.length>=animals.length;
-  if(all){
-    tp.classList.add('unlocked'); tp.onclick=w===1?showW2Unlock:()=>backToWorld1();
-  } else { tp.classList.remove('unlocked'); tp.onclick=null; }
+  const tp=document.getElementById('tree-portal');
+  tp.style.left=MAPA.arvore.x+'px'; tp.style.top=MAPA.arvore.y+'px';
+  tp.classList.toggle('unlocked', tudoCompleto());
+  tp.onclick = tudoCompleto() ? mostrarFim : null;
 }
 
 // ========= PLAYER & CAMERA =========
-function positionPlayer(w){ const pl=document.getElementById(w===1?'player':'player2'); const x=w===1?G.px1:G.px2, y=w===1?G.py1:G.py2; pl.style.left=x+'px'; pl.style.top=y+'px'; }
+function positionPlayer(){
+  const pl=document.getElementById('player');
+  pl.style.left=G.px+'px'; pl.style.top=G.py+'px';
+}
 function setPlayerMotion(pl, dx, dy, moving){
   if(!pl) return;
   pl.classList.toggle('walk', moving);
@@ -310,67 +654,160 @@ function setPlayerMotion(pl, dx, dy, moving){
   if(Math.abs(dx)>Math.abs(dy)) pl.classList.add(dx<0?'frog-left':'frog-right');
   else pl.classList.add(dy<0?'frog-up':'frog-down');
 }
-function snapCamera(w, immediate=false){
-  const worldEl=document.getElementById(w===1?'world':'world2'); if(!worldEl) return;
-  const vw=window.innerWidth, vh=window.innerHeight;
-  const px=w===1?G.px1:G.px2, py=w===1?G.py1:G.py2;
-  const dim=MAP_DIM[w]||{w:WW,h:WH};
-  WW=dim.w; WH=dim.h;
-  const tx=Math.max(0,Math.min(WW-vw, px-vw/2));
-  const ty=Math.max(0,Math.min(WH-vh, py-vh/2));
+// Tela maior que o mapa (monitor Full HD, projetor da sala): o mapa é
+// ampliado até cobrir tudo. Sem isso sobrava uma faixa preta à direita
+// e embaixo, com o placar e os botões boiando no vazio.
+function escalaMapa(){ return Math.max(1, window.innerWidth/MAPA_W, window.innerHeight/MAPA_H); }
+// Pedaço do mapa que cabe na tela, em pixels do mapa
+function telaNoMapa(){ const esc=escalaMapa(); return {w:window.innerWidth/esc, h:window.innerHeight/esc, esc}; }
+function snapCamera(immediate=false){
+  const worldEl=document.getElementById('world'); if(!worldEl) return;
+  const {w:vw, h:vh, esc}=telaNoMapa();
+  const tx=Math.max(0,Math.min(MAPA_W-vw, G.px-vw/2));
+  const ty=Math.max(0,Math.min(MAPA_H-vh, G.py-vh/2));
   if(immediate){
     G.camx=tx; G.camy=ty;
   } else {
     G.camx += (tx-G.camx)*0.18;
     G.camy += (ty-G.camy)*0.18;
   }
-  worldEl.style.transform=`translate(${-G.camx}px,${-G.camy}px)`;
+  worldEl.style.transform=`scale(${esc}) translate(${-G.camx}px,${-G.camy}px)`;
 }
 
 // ========= MINIMAP / PROGRESS =========
-function drawMini(w){
-  const mm=document.getElementById(w===1?'minimap':'minimap2'); if(!mm) return;
+function drawMini(){
+  const mm=document.getElementById('minimap'); if(!mm) return;
   const ctx=mm.getContext('2d'); const mw=mm.width, mh=mm.height;
-  const dim=MAP_DIM[w]||{w:WW,h:WH}; const sx=mw/dim.w, sy=mh/dim.h;
+  const sx=mw/MAPA_W, sy=mh/MAPA_H;
   ctx.clearRect(0,0,mw,mh);
 
-  if(w===1){
-    ctx.fillStyle='#1B5E20'; ctx.fillRect(0,0,mw/2,mh/2);
-    ctx.fillStyle='#BF360C'; ctx.fillRect(mw/2,0,mw/2,mh/2);
-    ctx.fillStyle='#FF8F00'; ctx.fillRect(0,mh/2,mw/2,mh/2);
-    ctx.fillStyle='#558B2F'; ctx.fillRect(mw/2,mh/2,mw/2,mh/2);
-    PORTALS1.forEach((p,i)=>{ const d=G.done1.includes(i), u=(i===0)||G.done1.includes(i-1); ctx.fillStyle=d?'#69F0AE':u?'#FFD700':'#607D8B'; ctx.fillRect(p.x*sx-3,p.y*sy-3,6,6); });
-    ctx.fillStyle=G.done1.length>=4?'#FFD700':'#795548'; ctx.fillRect(TREE1.x*sx-4,TREE1.y*sy-4,8,8);
-    ctx.fillStyle='#fff'; ctx.fillRect(G.px1*sx-4,G.py1*sy-4,8,8);
+  // O fundo é a própria imagem do mapa encolhida, então o minimapa
+  // continua certo mesmo se o desenho do mapa mudar de novo.
+  if(MAPA_IMG && MAPA_IMG.complete && MAPA_IMG.naturalWidth){
+    ctx.drawImage(MAPA_IMG,0,0,mw,mh);
   } else {
-    ctx.fillStyle='#2E7D32'; ctx.fillRect(0,0,mw*0.28,mh);
-    ctx.fillStyle='#BF360C'; ctx.fillRect(mw*0.28,0,mw*0.38,mh);
-    ctx.fillStyle='#C8A96A'; ctx.fillRect(mw*0.54,0,mw*0.14,mh);
-    ctx.fillStyle='#0277BD'; ctx.fillRect(mw*0.68,0,mw*0.32,mh);
-    PORTALS2.forEach((p,i)=>{ const d=G.done2.includes(i), u=(i===0)||G.done2.includes(i-1); ctx.fillStyle=d?'#80DEEA':u?'#FFD700':'#607D8B'; ctx.fillRect(p.x*sx-3,p.y*sy-3,6,6); });
-    ctx.fillStyle='#006064'; ctx.fillRect(TREE2.x*sx-4,TREE2.y*sy-4,8,8);
-    ctx.fillStyle='#fff'; ctx.fillRect(G.px2*sx-4,G.py2*sy-4,8,8);
+    ctx.fillStyle='#2E7D32'; ctx.fillRect(0,0,mw,mh);
   }
-  const vw=window.innerWidth, vh=window.innerHeight;
+
+  MAPA.cavernas.forEach((p,i)=>{
+    const feito=G.done.includes(i);
+    ctx.fillStyle = feito ? '#69F0AE' : cavernaAberta(i) ? '#FFD700' : '#607D8B';
+    ctx.fillRect(p.x*sx-3,p.y*sy-3,6,6);
+  });
+  ctx.fillStyle = tudoCompleto() ? '#FFD700' : '#795548';
+  ctx.fillRect(MAPA.arvore.x*sx-4,MAPA.arvore.y*sy-4,8,8);
+  ctx.fillStyle='#fff'; ctx.fillRect(G.px*sx-4,G.py*sy-4,8,8);
+
+  const {w:vw, h:vh}=telaNoMapa();
   ctx.strokeStyle='rgba(255,255,255,.45)'; ctx.lineWidth=1; ctx.strokeRect(G.camx*sx,G.camy*sy,vw*sx,vh*sy);
 }
-function drawProg(w){
-  const animals=w===1?ANIMALS1:ANIMALS2; const done=w===1?G.done1:G.done2;
-  const el=document.getElementById('prog-list'+w); if(!el) return;
-  el.innerHTML=animals.map((a,i)=>{
-    const isDone=done.includes(i);
-    const label=isDone ? `${a.emoji} ${a.name}` : '???';
-    return `<div class="prog-item"><div class="prog-dot ${isDone?'done':'todo'}"></div><span style="color:${isDone?'#69F0AE':'#90A4AE'}">${label}</span></div>`;
+function drawProg(){
+  const el=document.getElementById('prog-list'); if(!el) return;
+  el.innerHTML=MAPA.cavernas.map((_,i)=>{
+    const feito=G.done.includes(i);
+    // Só mostra o nome depois de descoberto — antes seria entregar.
+    const label=feito ? animaisDaCaverna(i).map(figura).join(' ') : `Caverna ${i+1}`;
+    return `<div class="prog-item"><div class="prog-dot ${feito?'done':'todo'}"></div><span style="color:${feito?'#69F0AE':'#90A4AE'}">${label}</span></div>`;
   }).join('');
-  const sv=document.getElementById('map-score-val'+(w===2?'2':'')); if(sv) sv.textContent=G.score;
+}
+
+// ========= SÓ ANDAR PELA TRILHA =========
+// A grade de js/trilhas.js diz quais pedaços do mapa são caminho de
+// terra. Aqui ela vira uma lista de bits, lida uma vez só.
+let _gradeTrilha;                            // undefined = ainda não tentou ler
+function gradeTrilha(){
+  if(_gradeTrilha!==undefined) return _gradeTrilha;
+  if(typeof TRILHAS==='undefined' || !TRILHAS.bits) return (_gradeTrilha=null);
+  try{
+    const bruto=atob(TRILHAS.bits);
+    const bytes=new Uint8Array(bruto.length);
+    for(let i=0;i<bruto.length;i++) bytes[i]=bruto.charCodeAt(i);
+    _gradeTrilha={bytes, colunas:TRILHAS.colunas, linhas:TRILHAS.linhas};
+  }catch(e){
+    // Sem a grade o jogo não trava: volta a andar por todo lado.
+    _gradeTrilha=null;
+  }
+  return _gradeTrilha;
+}
+// (x,y) em pixels do mapa. O ponto que conta é o PÉ do sapo, porque o
+// sprite é desenhado com translate(-50%,-100%) a partir de G.px/G.py.
+function naTrilha(x,y){
+  const g=gradeTrilha();
+  if(!g) return true;                       // sem grade, anda livre
+  const cx=Math.floor(x*g.colunas/MAPA_W);
+  const cy=Math.floor(y*g.linhas/MAPA_H);
+  if(cx<0||cy<0||cx>=g.colunas||cy>=g.linhas) return false;
+  const i=cy*g.colunas+cx;
+  return (g.bytes[i>>3] >> (7-(i&7)) & 1) === 1;
 }
 
 // ========= LOOP =========
 function startLoop(){
   if(G.raf) cancelAnimationFrame(G.raf);
-  function loop(){ if(G.screen==='map'||G.screen==='map2') movePlayer(); G.raf=requestAnimationFrame(loop); }
+  function loop(){ if(G.screen==='map' && !modalAberto()) movePlayer(); G.raf=requestAnimationFrame(loop); }
   loop();
 }
+// Quanto o sapo aceita escorregar de lado para dobrar uma curva, em
+// pixels do mapa. A trilha vira o tempo todo, e a criança segura uma
+// seta só: sem esta ajuda ela teria que acertar a diagonal exata bem em
+// cima da quina, e o sapo parava em cada curva.
+const AJUDA_CANTO=28;
+// Até onde o sapo pode ir sem cair fora do desenho.
+function limitarX(x){ return Math.max(40, Math.min(MAPA_W-40, x)); }
+function limitarY(y){ return Math.max(80, Math.min(MAPA_H-40, y)); }
+
+// Anda o quanto pedir, mas só onde dá para pisar. Se o sapo já estiver
+// fora da trilha (mapa trocado, jogo antigo salvo), não o prende: deixa
+// andar livre até ele voltar para o caminho.
+function moverNaTrilha(dx, dy){
+  if(!naTrilha(G.px, G.py)){
+    G.px=limitarX(G.px+dx); G.py=limitarY(G.py+dy);
+    return;
+  }
+
+  // De 1 em 1 pixel, cada eixo por si. Indo de uma vez só, o sapo parava
+  // até 3 pixels antes da beirada e engatava em cada dente da grade de
+  // 8 pixels; de pixel em pixel ele encosta na trilha e segue rente a
+  // ela. É isto também que impede o arrasto no celular de atravessar o
+  // mato de um salto.
+  const passos=Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dy))));
+  const ux=dx/passos, uy=dy/passos;
+  let travouX=false, travouY=false;
+  for(let i=0;i<passos;i++){
+    if(ux && !travouX){
+      const nx=limitarX(G.px+ux);
+      if(naTrilha(nx, G.py)) G.px=nx; else travouX=true;
+    }
+    if(uy && !travouY){
+      const ny=limitarY(G.py+uy);
+      if(naTrilha(G.px, ny)) G.py=ny; else travouY=true;
+    }
+    if((!ux||travouX) && (!uy||travouY)) break;
+  }
+
+  // Bateu de frente segurando uma seta só: a trilha dobrou. Procura a
+  // continuação ao lado e leva o sapo para lá.
+  if(travouX && !uy) escorregarNaCurva(Math.sign(ux), 0);
+  if(travouY && !ux) escorregarNaCurva(0, Math.sign(uy));
+}
+
+// Olha um quadradinho à frente, para os dois lados, e devolve o sapo um
+// pixel na direção em que a trilha continua. Repetido a cada quadro, ele
+// faz a curva sozinho sem sair do caminho de terra.
+function escorregarNaCurva(sx, sy){
+  const FRENTE=4;                           // logo depois da beirada onde bateu
+  for(let d=2; d<=AJUDA_CANTO; d+=2){
+    for(const lado of [-1, 1]){
+      const alvoX=limitarX(G.px + sx*FRENTE + (sx?0:lado*d));
+      const alvoY=limitarY(G.py + sy*FRENTE + (sy?0:lado*d));
+      if(!naTrilha(alvoX, alvoY)) continue;
+      const nx = sx ? G.px : limitarX(G.px+lado);
+      const ny = sx ? limitarY(G.py+lado) : G.py;
+      if(naTrilha(nx, ny)){ G.px=nx; G.py=ny; return; }
+    }
+  }
+}
+
 function movePlayer(){
   let ix=0,iy=0;
   if(G.keys['ArrowLeft']||G.keys['a']||G.keys['A']) ix-=1;
@@ -381,218 +818,574 @@ function movePlayer(){
   const mag=Math.hypot(ix,iy);
   if(mag>0){ ix/=mag; iy/=mag; }
 
-  const ACC=0.34, FRICTION=0.78, MAX=3.0;
+  // MAX é o passo do sapo por quadro: 2.2 dá uns 130 pixels por segundo,
+  // um ritmo de caminhada que a criança consegue acompanhar e parar em
+  // cima da caverna. ACC caiu junto para ele levar o mesmo tempinho até
+  // engatar o passo, em vez de sair disparado do lugar parado.
+  const ACC=0.25, FRICTION=0.78, MAX=2.2;
   G.vx=(G.vx||0)+ix*ACC;
   G.vy=(G.vy||0)+iy*ACC;
-  if(!mag){ G.vx*=FRICTION; G.vy*=FRICTION; }
+  // O freio é por eixo, e não só quando a criança larga tudo. Soltando a
+  // seta de descer e segurando só a da direita, o sapo continuava caindo
+  // para baixo de lado — ia parar no mato em vez de seguir a trilha.
+  if(!ix) G.vx*=FRICTION;
+  if(!iy) G.vy*=FRICTION;
+  // Sobra de velocidade pequena demais para render pixel vira zero: é o
+  // que deixa o sapo andando reto para a ajuda de curva reconhecer.
+  if(Math.abs(G.vx)<0.05) G.vx=0;
+  if(Math.abs(G.vy)<0.05) G.vy=0;
   const speed=Math.hypot(G.vx,G.vy);
   if(speed>MAX){ G.vx=(G.vx/speed)*MAX; G.vy=(G.vy/speed)*MAX; }
   if(Math.hypot(G.vx,G.vy)<0.05){
     G.vx=0; G.vy=0;
-    setPlayerMotion(curPlayerEl(),0,0,false);
+    setPlayerMotion(document.getElementById('player'),0,0,false);
     return;
   }
 
-  const w=G.world; const dim=MAP_DIM[w]||{w:WW,h:WH};
-  let nx=(w===1?G.px1:G.px2)+G.vx, ny=(w===1?G.py1:G.py2)+G.vy;
-  nx=Math.max(40,Math.min(dim.w-40,nx)); ny=Math.max(80,Math.min(dim.h-40,ny));
-  if(w===1){G.px1=nx;G.py1=ny;} else {G.px2=nx;G.py2=ny;}
+  // Cada eixo é testado sozinho: assim, ao esbarrar no mato de lado, o
+  // sapo escorrega pela beirada da trilha em vez de travar de vez.
+  moverNaTrilha(G.vx, G.vy);
 
-  const pl=curPlayerEl(); pl.style.left=nx+'px'; pl.style.top=ny+'px';
+  const pl=document.getElementById('player');
+  pl.style.left=G.px+'px'; pl.style.top=G.py+'px';
   setPlayerMotion(pl,G.vx,G.vy,true);
   clearTimeout(G._walkTimer); G._walkTimer=setTimeout(()=>setPlayerMotion(pl,0,0,false),200);
-  snapCamera(G.world); drawMini(G.world); checkNear();
+  snapCamera(); drawMini(); checkNear();
 }
+// Só mexe no aviso quando o sapo chega perto ou se afasta. Recriado a cada
+// quadro, ele reiniciava a animação e ficava parado enquanto o sapo andava.
 function checkNear(){
-  const w=G.world; const done=w===1?G.done1:G.done2; const portPos=w===1?PORTALS1:PORTALS2;
-  const px=w===1?G.px1:G.px2, py=w===1?G.py1:G.py2; const prefix=w===1?'portal':'portal2';
-  portPos.forEach((pos,i)=>{
-    const dist=Math.hypot(px-pos.x,py-pos.y); const pDiv=document.getElementById(prefix+'-'+i); if(!pDiv) return;
-    const ulk=(i===0)||done.includes(i-1); const pDone=done.includes(i);
-    const oldH=pDiv.querySelector('.portal-hint'); if(oldH) oldH.remove(); pDiv.classList.remove('near');
-    if(dist<110&&ulk&&!pDone){ pDiv.classList.add('near'); const h=document.createElement('div'); h.className='portal-hint'; h.textContent='▶ APERTE E'; pDiv.appendChild(h); }
+  MAPA.cavernas.forEach((pos,i)=>{
+    const pDiv=document.getElementById('portal-'+i); if(!pDiv) return;
+    const dist=Math.hypot(G.px-pos.x,G.py-pos.y);
+    const perto = dist<110 && cavernaAberta(i) && !G.done.includes(i);
+    const oldH=pDiv.querySelector('.portal-hint');
+    pDiv.classList.toggle('near', perto);
+    if(perto && !oldH){
+      const h=document.createElement('div'); h.className='portal-hint';
+      h.textContent = G.toque ? '▶ Toque aqui' : '▶ Aperte E';
+      pDiv.appendChild(h);
+    } else if(!perto && oldH){
+      oldH.remove();
+    }
   });
 }
 
-// ========= ENTRAR NO NÍVEL =========
+// ========= ENTRAR NA CAVERNA =========
+// Cada setupPx mostra a PRÓPRIA tela antes de começar o áudio. Trocar
+// de tela silencia o canal; quando a troca vinha depois, ela cortava na
+// hora a narração e o som do bicho que a etapa acabava de começar.
 function enterLevel(i){
-  const done=curDone(); const ulk=(i===0)||done.includes(i-1);
-  if(!ulk||done.includes(i)) return;
-  G.idx=i; G.firstTry=true; G.combo=0; G.p3tries=0;
-  setupP1(); showSc('p1');
+  if(!cavernaAberta(i) || G.done.includes(i)) return;
+  G.idx=i; G.combo=0;
+  setupP1();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  GRID DE OPÇÕES — usado pelas 3 fases
+// ─────────────────────────────────────────────────────────────
+function buildOptions({grid, classe, decorar, comSom, filtro, onPick}){
+  const alvo=animalAtual();
+  // Os distratores saem do catálogo INTEIRO, não só dos animais
+  // sorteados para esta partida — senão dava para acertar por eliminação.
+  let pool=todosAnimais().filter(a=>a.id!==alvo.id);
+  // A pergunta de característica exige distratores que NÃO tenham o
+  // traço perguntado — senão haveria mais de uma resposta certa.
+  if(filtro) pool=pool.filter(filtro);
+  const outros=shuffle(pool).slice(0,3);
+  const opts=shuffle([alvo,...outros]);
+  const el=document.getElementById(grid); el.innerHTML='';
+  el.setAttribute('role','group');
+  el.setAttribute('aria-label','Escolha o animal');
+  opts.forEach((opt,i)=>{
+    // Cada opção é uma célula com dois botões LADO A LADO: a resposta e,
+    // na fase do som, o alto-falante. Com um botão dentro do outro (HTML
+    // inválido), o leitor de tela não enxergava o alto-falante e, ao
+    // tentar apertá-lo, a criança podia acabar respondendo.
+    const cel=document.createElement('div');
+    cel.className='optcel';
+    // <button> em vez de <div>: recebe foco, aceita ENTER e ESPAÇO e é
+    // anunciado como botão. Sem isso a criança cega ouviria as opções
+    // mas só conseguiria responder com o mouse.
+    const card=document.createElement('button');
+    card.type='button';
+    card.className='optcard '+classe;
+    card.dataset.nome=opt.nome;
+    card.setAttribute('aria-label',`Opção ${i+1} de ${opts.length}: ${opt.nome}`);
+    card.innerHTML=`<span class="c-emoji" aria-hidden="true">${figura(opt)}</span><span class="c-name">${opt.nome}</span>`;
+    if(decorar) decorar(card,opt);
+    card.onclick=()=>onPick(opt,card);
+    card.addEventListener('focus',()=>{
+      // O foco posto pelo programa não fala: a lista de opções acabou de
+      // ser lida e a fala do foco entraria por cima dela.
+      if(_focoProgramatico || G.travado) return;
+      narrar(`Opção ${i+1} de ${opts.length}: ${opt.nome}`, {guardar:false});
+    });
+    cel.appendChild(card);
+    if(comSom) cel.appendChild(botaoSom(opt));
+    el.appendChild(cel);
+  });
+  ligarSetasDoGrid(el);
+}
+// Setas percorrem as opções em ciclo; Tab continua funcionando normal.
+function ligarSetasDoGrid(el){
+  if(el._setasLigadas) return;   // o grid é reaproveitado entre as fases
+  el._setasLigadas=true;
+  el.addEventListener('keydown',e=>{
+    if(!['ArrowRight','ArrowDown','ArrowLeft','ArrowUp'].includes(e.key)) return;
+    const cels=[...el.querySelectorAll('.optcel')];
+    // o foco pode estar no alto-falante, ao lado do card na mesma célula
+    const atual=document.activeElement && document.activeElement.closest
+      ? document.activeElement.closest('.optcel') : null;
+    const i=cels.indexOf(atual);
+    if(i<0) return;
+    e.preventDefault();
+    const passo=(e.key==='ArrowRight'||e.key==='ArrowDown')?1:-1;
+    cels[(i+passo+cels.length)%cels.length].querySelector('.optcard').focus();
+  });
+}
+// Leva o foco para a primeira opção, para a criança já poder usar as
+// setas. Só quando a narração está ligada, para não roubar o foco de quem
+// está jogando com o mouse.
+let _focoProgramatico=false;
+function focarPrimeiraOpcao(gridId){
+  if(!VOZ.ligada) return;
+  const el=document.getElementById(gridId); if(!el) return;
+  const primeiro=el.querySelector('.optcard');
+  if(!primeiro || !primeiro.focus) return;
+  _focoProgramatico=true;
+  try{ primeiro.focus(); } finally { _focoProgramatico=false; }
+}
+// Grid da fase em que a criança está (p1grid, p2grid, p3grid)
+function gridAtual(){
+  if(G.screen==='p2t') return 'p2tgrid';
+  return ['p1','p2','p3'].includes(G.screen) ? G.screen+'grid' : null;
+}
+// "Caverna 2 de 4, etapa 1 de 3" — quem não enxerga não tem a tela
+// para saber onde está no percurso.
+function ondeEstou(){
+  return `Caverna ${G.idx+1} de ${totalCavernas()}, etapa ${G.fase+1} de ${FASES_POR_CAVERNA}.`;
+}
+// Alto-falante no canto do card: toca aquele animal sem escolher o card,
+// para a criança comparar os sons antes de decidir.
+function botaoSom(animal){
+  const b=document.createElement('button');
+  b.type='button';
+  b.className='card-som';
+  b.textContent='🔊';
+  b.setAttribute('aria-label','Ouvir o som de '+animal.nome);
+  b.onclick=e=>{ e.stopPropagation(); tocarSom(animal,b); };
+  // O Tab passa por este botão entre um card e outro; sem esta fala a
+  // criança cega caía num ponto mudo e achava que o jogo tinha parado.
+  b.addEventListener('focus',()=>{
+    if(_focoProgramatico || G.travado) return;
+    narrar(`Ouvir o som de ${animal.nome}. Aperte ENTER.`, {guardar:false});
+  });
+  return b;
+}
+// Acerto/erro seguem o mesmo padrão nas 3 fases.
+function responder(opt, card, pontos, msgOk, proxima){
+  // Depois do acerto as opções ficam travadas até a próxima etapa: um
+  // segundo clique somava os pontos de novo, e um clique errado cortava
+  // a passagem de fase e deixava a criança presa com o card verde.
+  if(G.travado) return;
+  if(opt.id===animalAtual().id){
+    G.travado=true;
+    card.classList.add('ok');
+    addPts(G.firstTry?pontos:Math.round(pontos/2));
+    G.combo++;
+    feedback(msgOk,true);
+    avancarDepoisDoAcerto(opt, proxima);
+  } else {
+    // A célula inteira treme, para o alto-falante acompanhar o card
+    const cel=card.parentElement;
+    card.classList.add('ng'); cel.classList.add('treme');
+    G.firstTry=false; G.combo=0;
+    feedback('Tente novamente! 🤔',false);
+    narrar(`Não é ${comArtigo(opt)}. Tente de novo. Aperte R para ouvir a pergunta.`, {guardar:false});
+    setTimeout(()=>{ card.classList.remove('ng'); cel.classList.remove('treme'); },600);
+  }
+}
+// Com a voz ligada, a próxima etapa entra quando o "acertou" termina de
+// ser dito. Mas a passagem não pode depender só do canal de áudio: se
+// algo interromper a fala (ESC, as configurações), o prazo garante que
+// o jogo siga. `G.etapa` muda a cada troca de tela, então quem voltou ao
+// mapa e entrou de novo não é empurrado para a etapa seguinte.
+function avancarDepoisDoAcerto(opt, proxima){
+  const etapa=G.etapa;
+  let foi=false;
+  const ir=()=>{ if(foi || etapa!==G.etapa) return; foi=true; proxima(); };
+  if(VOZ.ligada){
+    tocarSequencia([{fala:`Acertou! Era ${comArtigo(opt)}.`, guardar:false},{acao:ir}]);
+    setTimeout(ir, 6000);
+  } else {
+    setTimeout(ir, 900);
+  }
 }
 
 // ========= FASE 1 — SOM =========
 function setupP1(){
-  const a=curAnimals(); const animal=a[G.idx]; const others=a.filter((_,j)=>j!==G.idx);
-  const opts=shuffle([animal,...shuffle(others).slice(0,3)]);
-  const grid=document.getElementById('p1grid'); grid.innerHTML='';
-  opts.forEach(opt=>{ const card=document.createElement('div'); card.className='p1card'; card.innerHTML=`<span class="c-emoji">${opt.emoji}</span><span class="c-name">${opt.name}</span>`; card.onclick=()=>onP1(opt,card); grid.appendChild(card); });
-  setTimeout(playSound, 400);
-}
-function onP1(opt,card){
-  const animals=curAnimals();
-  if(opt.id===animals[G.idx].id){ card.classList.add('ok'); addPts(G.firstTry?25:10); G.combo++; feedback('CORRETO! 🎉',true); setTimeout(()=>{setupP2();showSc('p2');},850); }
-  else { card.classList.add('ng'); G.firstTry=false; G.combo=0; feedback('TENTE NOVAMENTE! 🤔',false); setTimeout(()=>card.classList.remove('ng'),600); }
+  G.fase=0; G.firstTry=true;
+  showSc('p1');
+  const animal=animalAtual();
+  document.getElementById('p1-onoma').textContent=animal.onomatopeia||'???';
+  montarLibras(document.getElementById('p1-libras'), animal);
+  buildOptions({grid:'p1grid', classe:'p1card', comSom:true, onPick:(opt,card)=>{
+    responder(opt,card,25,'Correto! 🎉',setupP2);
+  }});
+
+  // Enunciado → som do bicho → opções → foco. Um item de cada vez: cada
+  // um só começa quando o anterior termina de verdade. Com a narração
+  // desligada as falas e o foco não fazem nada e fica só o som do bicho;
+  // a sequência é a mesma para o R repetir tudo se a voz for ligada aqui.
+  tocarSequencia([
+    {espera:400},
+    {fala:`${ondeEstou()} Fase do som. O som deste animal é: ${animal.onomatopeia}. `
+         +`Agora escute o bicho.`},
+    {som:animal, el:document.getElementById('sound-orb')},
+    {fala:listaDeOpcoes('p1grid'), guardar:false},
+    {acao:()=>focarPrimeiraOpcao('p1grid')},
+  ], {repetivel:true});
 }
 
-// ========= FASE 2 — SOMBRA =========
+// Área de Libras: mostra o vídeo do sinal quando `libras` estiver
+// preenchido em dados.js; senão, o aviso de "em breve".
+// Para ativar, basta apontar o caminho do arquivo — nada muda aqui.
+function montarLibras(box, animal){
+  if(!box) return;
+  box.innerHTML='';
+  if(animal.libras){
+    const v=document.createElement('video');
+    v.src=animal.libras; v.autoplay=true; v.muted=true; v.loop=true;
+    v.playsInline=true; v.setAttribute('playsinline','');
+    box.appendChild(v);
+  } else {
+    const p=document.createElement('div');
+    p.className='libras-aviso';
+    p.textContent='🤟 Sinal em Libras em breve';
+    box.appendChild(p);
+  }
+}
+
+// ========= FASE 2 — DUAS VERSÕES =========
+// A caverna sorteia entre a sombra e a pergunta de característica.
 function setupP2(){
-  const a=curAnimals(); const animal=a[G.idx]; document.getElementById('shadow-anim').textContent=animal.emoji;
-  const others=a.filter((_,j)=>j!==G.idx); const opts=shuffle([animal,...shuffle(others).slice(0,3)]);
-  const grid=document.getElementById('p2grid'); grid.innerHTML='';
-  opts.forEach(opt=>{ const card=document.createElement('div'); card.className='p2card'; card.style.background=opt.color; card.innerHTML=`<span class="c-emoji">${opt.emoji}</span><span class="c-name">${opt.name}</span>`; card.onclick=()=>onP2(opt,card); grid.appendChild(card); });
-}
-function onP2(opt,card){
-  const animals=curAnimals();
-  if(opt.id===animals[G.idx].id){ card.classList.add('ok'); addPts(G.firstTry?20:10); G.combo++; feedback('INCRÍVEL! 🌟',true); setTimeout(()=>{setupP3();showSc('p3');},850); }
-  else { card.classList.add('ng'); G.firstTry=false; G.combo=0; feedback('NÃO É ESSE! 🤔',false); setTimeout(()=>card.classList.remove('ng'),600); }
+  G.fase=1; G.firstTry=true;
+  if(varianteEtapa2()==='traco') setupP2Traco(); else setupP2Sombra();
 }
 
-// ========= FASE 3 — BIOMA =========
+// ── versão SOMBRA ──
+function setupP2Sombra(){
+  showSc('p2');
+  const animal=animalAtual();
+  document.getElementById('shadow-anim').innerHTML=figura(animal);
+  buildOptions({grid:'p2grid', classe:'p2card', decorar:(card,opt)=>{ card.style.background=opt.cor; }, onPick:(opt,card)=>{
+    responder(opt,card,20,'Incrível! 🌟',setupP3);
+  }});
+  // A audiodescrição é o que substitui a sombra para quem não enxerga.
+  tocarSequencia([
+    {fala:`${ondeEstou()} Fase da sombra. A sombra é assim: ${animal.audiodescricao} `
+        +`Que bicho é esse?`},
+    {fala:listaDeOpcoes('p2grid'), guardar:false},
+    {acao:()=>focarPrimeiraOpcao('p2grid')},
+  ], {repetivel:true});
+}
+
+// ── versão PERGUNTA DE CARACTERÍSTICA ──
+// Escolhe uma pergunta que o animal da etapa responde SIM, e monta as
+// opções só com animais que respondem NÃO — senão a pergunta teria
+// mais de uma resposta certa. Se nenhuma servir, cai na sombra.
+function setupP2Traco(){
+  const alvo=animalAtual();
+  const temTraco=(a,t)=> !!(a && a.tracos && a.tracos[t]);
+  const servem=shuffle(PERGUNTAS.filter(p=>
+    temTraco(alvo,p.traco) &&
+    todosAnimais().filter(a=>a.id!==alvo.id && !temTraco(a,p.traco)).length>=3
+  ));
+  const p=servem[0];
+  if(!p){ setupP2Sombra(); return; }
+  showSc('p2t');
+  G.pergunta=p;
+  document.getElementById('p2t-icone').textContent=p.icone;
+  document.getElementById('p2t-pergunta').textContent=p.texto;
+  buildOptions({grid:'p2tgrid', classe:'p2tcard',
+    filtro:a=>!temTraco(a,p.traco),
+    onPick:(opt,card)=>{
+      responder(opt,card,20,'Isso mesmo! 🌟',setupP3);
+    }});
+  tocarSequencia([
+    {fala:`${ondeEstou()} ${p.texto}`},
+    {fala:listaDeOpcoes('p2tgrid'), guardar:false},
+    {acao:()=>focarPrimeiraOpcao('p2tgrid')},
+  ], {repetivel:true});
+}
+
+// ========= FASE 3 — CHARADA =========
 function setupP3(){
-  const animal=curAnimals()[G.idx]; G.p3tries=0; document.getElementById('hintbtn').classList.remove('show');
-  const card=document.getElementById('p3card'); card.querySelector('.c-emoji').textContent=animal.emoji; card.querySelector('.c-name').textContent=animal.name;
-  const grid=document.getElementById('biogrid'); grid.innerHTML='';
-  Object.values(curBiomes()).forEach(b=>{ const div=document.createElement('div'); div.className=`bdrop ${b.cssClass}`; div.dataset.bio=b.id; div.innerHTML=`<span class="b-icon">${b.icon}</span><span class="b-name">${b.name}</span><span class="b-desc">${b.desc}</span>`; div.ondragover=e=>{e.preventDefault();div.classList.add('over');}; div.ondragleave=()=>div.classList.remove('over'); div.ondrop=e=>{e.preventDefault();div.classList.remove('over');onP3(b.id);}; div.onclick=()=>onP3(b.id); grid.appendChild(div); });
-  card.draggable=true; card.ondragstart=e=>{card.classList.add('drag');e.dataTransfer.setData('text','animal');}; card.ondragend=()=>card.classList.remove('drag');
-  setupTouchDrag(card);
+  G.fase=2; G.firstTry=true;
+  showSc('p3');
+  const texto=charadaDe(animalAtual());
+  document.getElementById('p3-charada').textContent=texto;
+  buildOptions({grid:'p3grid', classe:'p3card', onPick:(opt,card)=>{
+    responder(opt,card,30,'Você acertou a charada! 🧩',setupP4);
+  }});
+  tocarSequencia([
+    {fala:`${ondeEstou()} Fase da charada. ${texto}`},
+    {fala:listaDeOpcoes('p3grid'), guardar:false},
+    {acao:()=>focarPrimeiraOpcao('p3grid')},
+  ], {repetivel:true});
 }
-function setupTouchDrag(card){
-  const clone=document.getElementById('drag-clone'); const animal=curAnimals()[G.idx];
-  clone.querySelector('.c-emoji').textContent=animal.emoji; clone.querySelector('.c-name').textContent=animal.name;
-  card.ontouchstart=e=>{ e.preventDefault(); card.classList.add('drag'); clone.style.display='flex'; const t=e.touches[0]; clone.style.left=(t.clientX-50)+'px'; clone.style.top=(t.clientY-50)+'px'; };
-  card.ontouchmove=e=>{ e.preventDefault(); const t=e.touches[0]; clone.style.left=(t.clientX-50)+'px'; clone.style.top=(t.clientY-50)+'px'; };
-  card.ontouchend=e=>{ e.preventDefault(); card.classList.remove('drag'); clone.style.display='none'; const t=e.changedTouches[0]; const els=document.elementsFromPoint(t.clientX,t.clientY); const target=els.find(el=>el.classList.contains('bdrop')); if(target) onP3(target.dataset.bio); };
-}
-function onP3(bioId){
-  const animal=curAnimals()[G.idx]; const correct=bioId===animal.biome; const bDiv=document.querySelector(`.bdrop[data-bio="${bioId}"]`); if(!bDiv) return;
-  if(correct){ bDiv.classList.add('cflsh'); const pl=document.createElement('div'); pl.className='bdrop-placed'; pl.textContent=animal.emoji; bDiv.appendChild(pl); addPts(G.p3tries===0?30:15); G.combo++; feedback('BIOMA CERTO! 🌿',true); setTimeout(()=>{setupP4();showSc('p4');},1100); }
-  else { G.p3tries++; G.firstTry=false; G.combo=0; bDiv.classList.add('wflsh'); feedback('ESSE NÃO É O LUGAR! 🤔',false); setTimeout(()=>bDiv.classList.remove('wflsh'),600); if(G.p3tries>=1) document.getElementById('hintbtn').classList.add('show'); }
-}
-function showHint(){
-  const animal=curAnimals()[G.idx]; const biome=curBiomes()[animal.biome]; const bDiv=document.querySelector(`.bdrop[data-bio="${animal.biome}"]`);
-  if(bDiv){ const arr=document.createElement('div'); arr.className='hint-arrow'; arr.textContent='⬆ AQUI!'; bDiv.appendChild(arr); }
-  feedback('💡 '+biome.hint,true);
+
+// Sorteia uma das charadas do animal, evitando repetir a última usada —
+// a aula tem 20 minutos e as crianças repetem as fases.
+// Aceita `charadas: [...]` ou um único `charada: '...'`.
+const _ultimaCharada={};
+function charadaDe(animal){
+  const lista = animal.charadas || (animal.charada ? [animal.charada] : []);
+  if(!lista.length) return 'Quem sou eu?';
+  if(lista.length===1) return lista[0];
+  let i;
+  do{ i=Math.floor(Math.random()*lista.length); } while(i===_ultimaCharada[animal.id]);
+  _ultimaCharada[animal.id]=i;
+  return lista[i];
 }
 
 // ========= FASE 4 — CELEBRAÇÃO =========
+// Celebra os 3 animais da caverna, nao um so: cada etapa foi sobre um
+// animal diferente, entao a crianca descobriu tres.
 function setupP4(){
-  const animal=curAnimals()[G.idx]; const done=curDone();
-  document.getElementById('p4ring').textContent=animal.emoji;
-  document.getElementById('p4name').textContent=animal.name;
-  document.getElementById('p4fact').textContent=animal.fact;
-  addPts(30); if(!done.includes(G.idx)){ done.push(G.idx); save(); }
+  showSc('p4');
+  const achados=animaisDaCaverna(G.idx);
+  document.getElementById('p4-sub').textContent=
+    `Você descobriu ${achados.length} animais!`;
+
+  const cont=document.getElementById('p4-animais'); cont.innerHTML='';
+  achados.forEach(a=>{
+    const d=document.createElement('div');
+    d.className='p4-animal';
+    d.innerHTML=`<div class="p4a-emoji">${figura(a)}</div>`
+      +`<div class="p4a-nome">${a.nome}</div>`
+      +`<div class="p4a-som">${a.onomatopeia||''}</div>`;
+    cont.appendChild(d);
+  });
+
+  const fatos=document.getElementById('p4-fatos'); fatos.innerHTML='';
+  achados.forEach(a=>{
+    const d=document.createElement('div');
+    d.className='p4-fato';
+    d.innerHTML=`<span class="p4f-emoji">${figura(a)}</span><span>${a.curiosidade}</span>`;
+    fatos.appendChild(d);
+  });
+
+  // Marca a caverna antes de somar: addPts salva e redesenha o painel de
+  // progresso, que ficava mostrando esta caverna como não feita.
+  if(!G.done.includes(G.idx)) G.done.push(G.idx);
+  addPts(30);
+
+  // Confete: festa + os bichos do proprio catalogo, para continuar
+  // certo depois de trocar os animais em dados.js.
   const cw=document.getElementById('confwrap'); cw.innerHTML='';
-  const emojis=['🎉','🎊','⭐','🌟','🎈','🦜','🐵','🐆','🦤','🏆','✨','🌿','🌊','🐢','🦁'];
-  for(let i=0;i<28;i++){ const p=document.createElement('div'); p.style.cssText=`position:absolute;top:-60px;left:${Math.random()*100}%;font-size:${14+Math.random()*18}px;animation:conffall ${2+Math.random()*3}s ${Math.random()*2}s linear infinite`; p.textContent=emojis[i%emojis.length]; cw.appendChild(p); }
+  const emojis=shuffle(['🎉','🎊','⭐','🌟','🎈','🏆','✨','🌿']
+    .concat(todosAnimais().map(figura)));
+  for(let i=0;i<28;i++){ const p=document.createElement('div'); p.style.cssText=`position:absolute;top:-60px;left:${Math.random()*100}%;font-size:${18+Math.random()*22}px;animation:conffall ${2+Math.random()*3}s ${Math.random()*2}s linear infinite`; p.innerHTML=emojis[i%emojis.length]; cw.appendChild(p); }
 
-  const btn=document.getElementById('p4btn'); const animals=curAnimals(); const allDone=done.length>=animals.length;
-  if(allDone && G.world===1){ btn.textContent='🌊 IR AO MUNDO 2!'; btn.className='pbtn pbtn-cyan'; btn.onclick=()=>{ buildPortals(1); showW2Unlock(); }; }
-  else if(allDone && G.world===2){ btn.textContent='🏆 ZEROU O JOGO!'; btn.className='pbtn pbtn-gold'; btn.onclick=()=>{ buildPortals(2); showSc('map2'); }; }
-  else { btn.textContent='PRÓXIMO ANIMAL ▶'; btn.className='pbtn pbtn-green'; btn.onclick=nextAnimal; }
-}
-function nextAnimal(){ stopAnimalAudio(); buildPortals(G.world); showSc(curMapSc()); drawMini(G.world); updateHUD(); }
+  const btn=document.getElementById('p4btn');
+  if(tudoCompleto()){
+    btn.textContent='🏆 Ver o final!'; btn.className='pbtn pbtn-gold';
+    btn.onclick=mostrarFim;
+  } else {
+    btn.textContent='Próxima caverna ▶'; btn.className='pbtn pbtn-green';
+    btn.onclick=nextAnimal;
+  }
 
-// ========= TRANSIÇÕES DE MUNDO =========
-function showW2Unlock(){ document.getElementById('w2-unlock').classList.add('show'); }
-function enterWorld2(){
-  document.getElementById('w2-unlock').classList.remove('show');
-  G.world=2; applyWorldSize(2);
-  G.vx=0; G.vy=0;
-  buildPortals(2); positionPlayer(2); snapCamera(2,true); drawMini(2); updateHUD(); showSc('map2'); feedback('🌊 BEM-VINDO AO MUNDO 2!',true);
+  // Sem enxergar, a criança não sabe que o jogo espera um botão: o fim da
+  // narração diz o que fazer e já deixa o foco nele, para o ENTER valer.
+  const seguir = tudoCompleto() ? 'ver o final' : 'voltar ao mapa';
+  tocarSequencia([
+    {fala:`Parabéns! Você descobriu ${achados.length} animais. `
+      + achados.map(a=>`${a.nome}. ${a.curiosidade}`).join(' ')},
+    {fala:`Aperte ENTER para ${seguir}.`, guardar:false},
+    {acao:()=>{ if(VOZ.ligada && G.screen==='p4') btn.focus(); }},
+  ], {repetivel:true});
 }
-function backToWorld1(){
-  G.world=1; applyWorldSize(1);
-  G.vx=0; G.vy=0;
-  buildPortals(1); positionPlayer(1); snapCamera(1,true); drawMini(1); showSc('map'); feedback('🌿 DE VOLTA AO MUNDO 1!',true);
+function nextAnimal(){ stopAnimalAudio(); buildPortals(); showSc('map'); drawMini(); updateHUD(); checkNear(); }
+
+// ========= FINAL =========
+function fimAberto(){ return document.getElementById('fim').classList.contains('show'); }
+function mostrarFim(){
+  document.getElementById('fim').classList.add('show');
+  // Vindo da celebração, o mapa volta por trás do final. Com o final já
+  // aberto, o narrarMapa fica quieto em vez de começar e ser cortado.
+  if(G.screen!=='map'){ buildPortals(); showSc('map'); drawMini(); updateHUD(); }
+  G.keys={}; G.vx=0; G.vy=0;
+  // O placar da partida aparece aqui, antes do "Jogar de novo" zerá-lo
+  document.getElementById('fim-score').textContent=G.score;
+  tocarSequencia([
+    {fala:'Você conseguiu! Parabéns! Você descobriu todos os animais das cavernas! '
+      +`Você fez ${G.score} coroas! Jogue de novo: as cavernas vão guardar outros animais!`},
+    {fala:'Aperte ENTER para jogar de novo.', guardar:false},
+    {acao:()=>{ if(VOZ.ligada && fimAberto()) document.querySelector('#fim .pbtn').focus(); }},
+  ], {repetivel:true});
+}
+function jogarDeNovo(){
+  document.getElementById('fim').classList.remove('show');
+  G.score=0; G.done=[]; G.idx=0; G.fase=0; sortearFases();
+  G.px=MAPA.inicio.x; G.py=MAPA.inicio.y; G.vx=0; G.vy=0;
+  buildPortals(); positionPlayer(); snapCamera(true); drawMini(); updateHUD();
+  showSc('map');
+  // já estava no mapa, então o showSc não narra sozinho
+  narrarMapa();
+  feedback('🎲 Outros animais nas cavernas!',true);
 }
 
 // ========= TECLADO =========
 document.addEventListener('keydown',e=>{
-  G.keys[e.key]=true;
-  if(G.screen==='map'||G.screen==='map2'){
-    if(e.key==='e'||e.key==='E'||e.key==='Enter'){
-      const done=curDone(); const px=curPX(), py=curPY();
-      curPortals().forEach((pos,i)=>{ const dist=Math.hypot(px-pos.x,py-pos.y); const ulk=(i===0)||done.includes(i-1); if(dist<110&&ulk&&!done.includes(i)) enterLevel(i); });
-      const tree=curTree(); const td=Math.hypot(px-tree.x,py-tree.y); if(td<140&&(G.world===2||done.length>=curAnimals().length)){ if(G.world===1) showW2Unlock(); else backToWorld1(); }
+  G.keys[tecla(e)]=true;
+
+  // R repete a narração em qualquer tela
+  if((e.key==='r'||e.key==='R') && VOZ.ligada && !ehCampoDeTexto(e.target)){
+    e.preventDefault(); repetirNarracao(); return;
+  }
+
+  // ── Atalhos das fases ──
+  // Sem enxergar, tabular até a opção certa é lento. Os números escolhem
+  // direto, na mesma ordem em que a narração acabou de listá-las.
+  const grid=gridAtual();
+  if(grid && !ehCampoDeTexto(e.target) && !modalAberto()){
+    const n=parseInt(e.key,10);
+    if(n>=1 && n<=9){
+      const itens=[...document.getElementById(grid).querySelectorAll('.optcard')];
+      if(itens[n-1]){ e.preventDefault(); itens[n-1].click(); return; }
     }
-    if(e.key==='Escape'){ document.getElementById('helpmdf1').classList.remove('open'); document.getElementById('helpmdf2').classList.remove('open'); }
+    // S reouve o bicho da fase do som sem precisar achar o botão
+    if((e.key==='s'||e.key==='S') && G.screen==='p1'){
+      e.preventDefault(); playSound(); return;
+    }
+  }
+  if(e.key==='Escape'){
+    // ESC na confirmação é "não": fecha e devolve o foco, sem apagar nada
+    if(document.getElementById('confmdf').classList.contains('open')){
+      document.getElementById('conf-nao').click(); return;
+    }
+    document.getElementById('helpmdf').classList.remove('open');
+    document.getElementById('cfgmdf').classList.remove('open');
+    pararNarracao();
+  }
+
+  // Com a ajuda, as configurações ou o final abertos, o ENTER é do botão
+  // em foco; o mapa por trás não pode entrar numa caverna ao mesmo tempo.
+  if(G.screen==='map' && !modalAberto()){
+    if(e.key==='e'||e.key==='E'||e.key==='Enter'){
+      let entrou=false;
+      MAPA.cavernas.forEach((pos,i)=>{
+        const dist=Math.hypot(G.px-pos.x,G.py-pos.y);
+        if(dist<110 && cavernaAberta(i) && !G.done.includes(i)){ enterLevel(i); entrou=true; }
+      });
+      const td=Math.hypot(G.px-MAPA.arvore.x,G.py-MAPA.arvore.y);
+      if(!entrou && td<140 && tudoCompleto()){ mostrarFim(); entrou=true; }
+      // Com a narração ligada, ENTER vale de qualquer lugar do mapa: quem
+      // não enxerga não tem como levar o sapo até a caverna.
+      if(!entrou && VOZ.ligada){
+        const prox=proximaCaverna();
+        if(prox!==null) enterLevel(prox);
+        else if(tudoCompleto()) mostrarFim();
+      }
+    }
     if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
   }
 });
-document.addEventListener('keyup',e=>{ G.keys[e.key]=false; });
+function ehCampoDeTexto(el){
+  if(!el || !el.tagName) return false;
+  return ['INPUT','TEXTAREA','SELECT'].includes(el.tagName);
+}
+function modalAberto(){
+  return fimAberto()
+    || ['helpmdf','cfgmdf','confmdf'].some(id=>document.getElementById(id).classList.contains('open'));
+}
+// Letras sempre em minúscula: apertando A e soltando com o Shift já
+// pressionado, o keyup chegava como 'A', o 'a' ficava marcado e o sapo
+// andava sozinho para sempre.
+function tecla(e){ return e.key && e.key.length===1 ? e.key.toLowerCase() : e.key; }
+document.addEventListener('keyup',e=>{ G.keys[tecla(e)]=false; });
+// Trocou de janela com a seta apertada: o keyup nunca chega aqui.
+window.addEventListener('blur',()=>{ G.keys={}; });
 
 // ========= TOUCH — MOVER NO MAPA =========
-function addTouchMove(vpId,w){
+function addTouchMove(vpId){
   const vp=document.getElementById(vpId); if(!vp) return;
-  vp.addEventListener('touchstart',e=>{ const t=e.touches[0]; G._tsx=t.clientX; G._tsy=t.clientY; },{passive:true});
+  // No celular não existe tecla E: o aviso da caverna passa a dizer "toque"
+  vp.addEventListener('touchstart',e=>{ const t=e.touches[0]; G._tsx=t.clientX; G._tsy=t.clientY; G.toque=true; },{passive:true});
   vp.addEventListener('touchmove',e=>{
     const t=e.touches[0];
     const dx=(t.clientX-G._tsx)*.45, dy=(t.clientY-G._tsy)*.45;
     G._tsx=t.clientX; G._tsy=t.clientY;
-    const dim=MAP_DIM[w]||{w:WW,h:WH};
-    if(w===1){
-      G.px1=Math.max(40,Math.min(dim.w-40,G.px1+dx));
-      G.py1=Math.max(80,Math.min(dim.h-40,G.py1+dy));
-    } else {
-      G.px2=Math.max(40,Math.min(dim.w-40,G.px2+dx));
-      G.py2=Math.max(80,Math.min(dim.h-40,G.py2+dy));
-    }
-    const pl=document.getElementById(w===1?'player':'player2');
-    const px=w===1?G.px1:G.px2, py=w===1?G.py1:G.py2;
-    pl.style.left=px+'px'; pl.style.top=py+'px';
+    moverNaTrilha(dx, dy);
+    const pl=document.getElementById('player');
+    pl.style.left=G.px+'px'; pl.style.top=G.py+'px';
     setPlayerMotion(pl,dx,dy,true);
-    snapCamera(w); drawMini(w); checkNear();
+    snapCamera(); drawMini(); checkNear();
   },{passive:true});
-  vp.addEventListener('touchend',()=>{ setPlayerMotion(document.getElementById(w===1?'player':'player2'),0,0,false); },{passive:true});
+  vp.addEventListener('touchend',()=>{ setPlayerMotion(document.getElementById('player'),0,0,false); },{passive:true});
 }
 
 // ========= MODAL AJUDA =========
-function toggleHelp(w){ document.getElementById('helpmdf'+w).classList.toggle('open'); }
+function toggleHelp(){ document.getElementById('helpmdf').classList.toggle('open'); }
 
 // ========= BACK BUTTON =========
-document.getElementById('backbtn').onclick=()=>{ stopAnimalAudio(); buildPortals(G.world); showSc(curMapSc()); };
+document.getElementById('backbtn').onclick=()=>{ stopAnimalAudio(); buildPortals(); showSc('map'); checkNear(); };
 
 // ========= UTILS =========
 function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
-// ========= WORLD SIZE (ajuste à imagem real) =========
-function getEmbeddedMapUrl(w){
-  const el=document.getElementById(w===1?'map1-data':'map2-data');
-  const data=(el?.textContent||'').trim();
-  if(data && data.startsWith('data:image/')) return data;
-  return w===1 ? 'assets/images/mapainicial.png' : 'assets/images/mapacima.png';
-}
-
-function applyWorldSize(w){
-  const id = w===1 ? 'world' : 'world2';
-  const portalsId = w===1 ? 'portals' : 'portals2';
-  const url = getEmbeddedMapUrl(w);
-  const img = new Image();
-  img.onload = ()=>{
-    const wd=document.getElementById(id); const pd=document.getElementById(portalsId);
-    const wpx=img.naturalWidth||1402; const hpx=img.naturalHeight||1122;
-    wd.style.width = wpx+'px'; wd.style.height = hpx+'px';
-    wd.style.backgroundImage = `url("${url}")`;
-    wd.style.backgroundSize = wpx+'px '+hpx+'px';
-    pd.style.width = wpx+'px'; pd.style.height = hpx+'px';
-    MAP_DIM[w]={w:wpx,h:hpx};
+// ========= TAMANHO DO MAPA (ajuste à imagem real) =========
+function aplicarTamanhoMapa(){
+  const url=MAPA.imagem;
+  const img=new Image();
+  img.onload=()=>{
+    const wd=document.getElementById('world'); const pd=document.getElementById('portals');
+    const wpx=img.naturalWidth||1536; const hpx=img.naturalHeight||1024;
+    MAPA_IMG=img;
+    wd.style.width=wpx+'px'; wd.style.height=hpx+'px';
+    wd.style.backgroundImage=`url("${url}")`;
+    wd.style.backgroundSize=wpx+'px '+hpx+'px';
+    pd.style.width=wpx+'px'; pd.style.height=hpx+'px';
+    MAPA_W=wpx; MAPA_H=hpx;
     // Reenquadrar câmera e minimapa quando a imagem carrega
-    snapCamera(w,true); drawMini(w);
+    snapCamera(true); drawMini();
   };
-  img.src = url;
+  img.src=url;
 }
 
 // ========= INIT =========
 window.addEventListener('DOMContentLoaded',()=>{
   load(); buildIntroBG();
-  document.getElementById('mutebtn').style.display='none';
+  // O texto da ajuda conta as cavernas do mapa, em vez de trazer o
+  // número escrito à mão: acrescentou uma caverna, o texto se ajusta.
+  const totalAjuda=document.getElementById('help-total');
+  if(totalAjuda) totalAjuda.textContent=totalCavernas();
   document.getElementById('backbtn').style.display='none';
-  if(G.done1.length>0||G.done2.length>0){ document.getElementById('btn-continue').style.display='block'; }
-  addTouchMove('vp1',1); addTouchMove('vp2',2);
+  atualizarBotoesIntro();
+  conferirImagens();
+  document.getElementById('confmdf').addEventListener('keydown', prenderFocoNaConfirmacao);
+  addTouchMove('vp1');
   document.addEventListener('contextmenu',e=>e.preventDefault());
-  window.addEventListener('resize',()=>{ if(G.screen==='map') snapCamera(1); if(G.screen==='map2') snapCamera(2); });
-  // Preparar tamanhos de mundo ao abrir
-  applyWorldSize(1); applyWorldSize(2);
+  // Reenquadra na hora: com o sapo parado o loop não mexe na câmera, e
+  // girar o celular deixava o mapa torto até a criança andar.
+  window.addEventListener('resize',()=>{ if(G.screen==='map'){ snapCamera(true); drawMini(); } });
+  G.toque = !!(window.matchMedia && matchMedia('(hover: none)').matches);
+
+  // Narração: as vozes do navegador chegam de forma assíncrona
+  carregarConfig();
+  escolherVoz();
+  if(vozDisponivel() && typeof speechSynthesis.addEventListener==='function'){
+    speechSynthesis.addEventListener('voiceschanged', escolherVoz);
+  }
+  if(!vozDisponivel()){
+    const cn=document.getElementById('cfg-narracao');
+    if(cn){ cn.disabled=true; cn.checked=false; }
+    const aviso=document.getElementById('cfg-sem-voz');
+    if(aviso) aviso.style.display='block';
+  }
+
+  aplicarTamanhoMapa();
 });

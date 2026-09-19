@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gerar trilhas</title>
+<style>
+  :root{ --gold:#FFD700; --fundo:#12200f; --caixa:#1b2e18; --borda:#000; }
+  *{box-sizing:border-box}
+  body{margin:0;padding:24px 16px;background:var(--fundo);color:#fff;
+       font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+  .folha{max-width:860px;margin:0 auto}
+  h1{font-size:24px;margin:0 0 6px}
+  .sub{color:#9ccc9c;margin:0 0 22px}
+  .caixa{background:var(--caixa);border:5px solid var(--borda);box-shadow:6px 6px 0 var(--borda);
+         padding:18px;margin-bottom:20px}
+  .passo{font-weight:700;color:var(--gold);margin-bottom:8px}
+  ol{margin:0;padding-left:20px} li{margin-bottom:6px}
+  input[type=file]{display:block;margin-top:10px;color:#fff;font-size:15px}
+  canvas{max-width:100%;height:auto;border:4px solid #000;margin-top:12px;display:block;
+         image-rendering:pixelated;background:#000}
+  textarea{width:100%;height:220px;margin-top:10px;font-family:ui-monospace,Consolas,monospace;
+           font-size:12px;background:#0c160a;color:#cfe8c6;border:4px solid #000;padding:10px;
+           white-space:pre;overflow:auto}
+  button{font:inherit;font-weight:700;cursor:pointer;background:var(--gold);color:#000;
+         border:4px solid #000;box-shadow:4px 4px 0 #000;padding:10px 18px;margin-top:12px}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .aviso{color:#ffd9a0;font-size:14px;margin-top:10px}
+  .num{color:#9ccc9c;font-size:14px;margin-top:10px}
+  .legenda{font-size:14px;color:#9ccc9c;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="folha">
+  <h1>🛤️ Gerar trilhas</h1>
+  <p class="sub">Refaz o arquivo <code>js/trilhas.js</code>, que diz por onde o sapo pode andar.
+     Use isto quando trocar o desenho do mapa.</p>
+
+  <div class="caixa">
+    <div class="passo">Como usar</div>
+    <ol>
+      <li>Escolha a imagem nova do mapa (a mesma que está em <code>MAPA.imagem</code>, no <code>js/dados.js</code>).</li>
+      <li>Confira no desenho abaixo se as trilhas ficaram acesas e o mato escuro.</li>
+      <li>Copie o texto gerado e substitua TODO o conteúdo de <code>js/trilhas.js</code>.</li>
+      <li>Por último, confira no <code>js/dados.js</code> se <code>inicio</code> caiu em cima de uma
+          trilha e se cada caverna está a menos de 110px de uma — senão a criança não chega nelas.</li>
+    </ol>
+    <input type="file" id="arquivo" accept="image/*" />
+    <p class="aviso" id="aviso"></p>
+  </div>
+
+  <div class="caixa" id="caixaPreview" hidden>
+    <div class="passo">Conferência</div>
+    <p class="legenda">Claro = dá para pisar. Escuro = mato, água ou pedra.</p>
+    <canvas id="tela"></canvas>
+    <p class="num" id="numeros"></p>
+  </div>
+
+  <div class="caixa" id="caixaSaida" hidden>
+    <div class="passo">Cole isto em js/trilhas.js</div>
+    <textarea id="saida" readonly spellcheck="false"></textarea>
+    <button id="copiar">📋 Copiar</button>
+  </div>
+</div>
+
+<script>
+// Estas regras precisam continuar iguais às descritas em js/trilhas.js.
+const CELL = 8;        // lado do quadradinho, em pixels do mapa
+const LIMIAR = 0.40;   // fração do quadradinho que precisa ser trilha
+
+// Terra batida: vermelho alto, azul baixo, degradê R > G > B.
+function ehTerra(r,g,b){
+  return r>=175 && b<=150 && (r-b)>=70 && g>=100 && g<=215 && r>g && g>b;
+}
+// Madeira das pontes e tábuas: marrom médio. Sem isto o rio parte o mapa em dois.
+function ehPonte(r,g,b){
+  return r>=110 && r<=205 && g>=60 && g<=150 && b>=30 && b<=115 && (r-b)>=45 && r>g && g>b;
+}
+
+document.getElementById('arquivo').addEventListener('change', e=>{
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const aviso=document.getElementById('aviso');
+  aviso.textContent='Lendo a imagem...';
+  const img=new Image();
+  img.onload=()=>{ URL.revokeObjectURL(img.src); try{ processar(img); aviso.textContent=''; }
+                   catch(err){ aviso.textContent='Não deu para ler os pixels: '+err.message; } };
+  img.onerror=()=>{ aviso.textContent='Não consegui abrir esse arquivo como imagem.'; };
+  img.src=URL.createObjectURL(f);
+});
+
+function processar(img){
+  const W=img.naturalWidth, H=img.naturalHeight;
+  const GW=Math.floor(W/CELL), GH=Math.floor(H/CELL);
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const cx=cv.getContext('2d', {willReadFrequently:true});
+  cx.drawImage(img,0,0);
+  const px=cx.getImageData(0,0,W,H).data;
+
+  // 1) conta quantos pixels de cada quadradinho são caminho
+  const conta=new Uint16Array(GW*GH);
+  for(let y=0;y<GH*CELL;y++){
+    const gy=(y/CELL)|0;
+    for(let x=0;x<GW*CELL;x++){
+      const i=(y*W+x)*4;
+      const r=px[i], g=px[i+1], b=px[i+2];
+      if(ehTerra(r,g,b) || ehPonte(r,g,b)) conta[gy*GW+((x/CELL)|0)]++;
+    }
+  }
+  const minimo=CELL*CELL*LIMIAR;
+  let base=new Uint8Array(GW*GH);
+  for(let i=0;i<base.length;i++) base[i]= conta[i]>=minimo ? 1 : 0;
+
+  // 2) alarga um quadradinho para cada lado — a detecção come a beirada
+  const dil=new Uint8Array(GW*GH);
+  for(let y=0;y<GH;y++) for(let x=0;x<GW;x++){
+    if(!base[y*GW+x]) continue;
+    for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){
+      const ny=y+dy, nx=x+dx;
+      if(ny>=0&&ny<GH&&nx>=0&&nx<GW) dil[ny*GW+nx]=1;
+    }
+  }
+
+  // 3) fica só o maior pedaço ligado (some barraca, troncos e outros enganos)
+  const marca=new Int32Array(GW*GH).fill(-1);
+  const fila=new Int32Array(GW*GH);
+  let maior=-1, maiorTam=0, ilhas=0, descartado=0;
+  for(let s=0;s<dil.length;s++){
+    if(!dil[s] || marca[s]!==-1) continue;
+    let a=0,b=0; fila[b++]=s; marca[s]=ilhas; let tam=0;
+    while(a<b){
+      const v=fila[a++]; tam++;
+      const vx=v%GW, vy=(v/GW)|0;
+      const viz=[[1,0],[-1,0],[0,1],[0,-1]];
+      for(let k=0;k<4;k++){
+        const nx=vx+viz[k][0], ny=vy+viz[k][1];
+        if(nx<0||ny<0||nx>=GW||ny>=GH) continue;
+        const n=ny*GW+nx;
+        if(!dil[n]||marca[n]!==-1) continue;
+        marca[n]=ilhas; fila[b++]=n;
+      }
+    }
+    if(tam>maiorTam){ descartado+=maiorTam; maiorTam=tam; maior=ilhas; }
+    else descartado+=tam;
+    ilhas++;
+  }
+  const mask=new Uint8Array(GW*GH);
+  for(let i=0;i<mask.length;i++) mask[i]= marca[i]===maior ? 1 : 0;
+
+  desenhar(img,W,H,GW,GH,mask);
+  document.getElementById('numeros').textContent =
+    `${W}x${H} px · grade ${GW}x${GH} · ${maiorTam} quadradinhos de trilha `
+    + `(${(100*maiorTam/(GW*GH)).toFixed(1)}% do mapa) · ${ilhas-1} pedaços soltos descartados `
+    + `(${descartado} quadradinhos).`;
+  document.getElementById('saida').value = montarArquivo(GW,GH,W,H,mask);
+  document.getElementById('caixaPreview').hidden=false;
+  document.getElementById('caixaSaida').hidden=false;
+}
+
+function desenhar(img,W,H,GW,GH,mask){
+  const tela=document.getElementById('tela');
+  tela.width=W; tela.height=H;
+  const c=tela.getContext('2d');
+  c.drawImage(img,0,0);
+  c.fillStyle='rgba(0,0,0,.68)';
+  for(let y=0;y<GH;y++) for(let x=0;x<GW;x++){
+    if(!mask[y*GW+x]) c.fillRect(x*CELL,y*CELL,CELL,CELL);
+  }
+}
+
+function montarArquivo(GW,GH,W,H,mask){
+  const bytes=new Uint8Array(Math.ceil(GW*GH/8));
+  for(let i=0;i<GW*GH;i++) if(mask[i]) bytes[i>>3] |= (1<<(7-(i&7)));
+  let bruto=''; for(let i=0;i<bytes.length;i++) bruto+=String.fromCharCode(bytes[i]);
+  const b64=btoa(bruto);
+  const partes=[];
+  for(let i=0;i<b64.length;i+=100) partes.push(b64.slice(i,i+100));
+  const corpo=partes.map((p,i)=>`  '${p}'`+(i<partes.length-1?' +':'')).join('\n');
+  const barra='═'.repeat(63);
+  return `// ${barra}
+//  ONDE DÁ PARA ANDAR
+// ${barra}
+//  O sapo só anda pelas trilhas de terra do mapa. Este arquivo diz quais
+//  pedaços do desenho são trilha — o jogo não enxerga a imagem sozinho.
+//
+//  Como funciona: o mapa virou uma grade de quadradinhos de ${CELL}x${CELL} pixels
+//  (${GW} colunas x ${GH} linhas). Cada quadradinho é 1 bit: 1 = dá para pisar,
+//  0 = mato, água ou pedra. Os bits estão em \`bits\`, em base64, lidos
+//  linha por linha, de cima para baixo.
+//
+//  De onde saiu:
+//   1. um quadradinho conta como trilha quando pelo menos ${Math.round(LIMIAR*100)}% dos pixels
+//      dele têm cor de terra batida (vermelho alto, azul baixo) ou de
+//      madeira de ponte — as pontes precisam valer, senão o rio parte o
+//      mapa em dois;
+//   2. a área cresce um quadradinho para cada lado, porque a detecção
+//      come a beirada e o corredor fica apertado demais para uma criança
+//      guiar o sapo;
+//   3. sobra só o maior pedaço ligado, o que joga fora engano solto no
+//      meio do mato, como a barraca e os troncos caídos.
+//
+//  TROCOU O MAPA? Abra ferramentas/gerar-trilhas.html, escolha a imagem
+//  nova e cole aqui o texto que a página gerar.
+const TRILHAS = {
+  colunas: ${GW},
+  linhas: ${GH},
+  // Tamanho do mapa de origem. As contas usam proporção, então a grade
+  // continua batendo se a imagem for trocada por outra do mesmo desenho
+  // em tamanho diferente.
+  larguraBase: ${W},
+  alturaBase: ${H},
+  bits:
+${corpo},
+};
+`;
+}
+
+document.getElementById('copiar').addEventListener('click',async()=>{
+  const t=document.getElementById('saida');
+  try{ await navigator.clipboard.writeText(t.value); }
+  catch(e){ t.select(); document.execCommand('copy'); }
+  const b=document.getElementById('copiar');
+  b.textContent='✅ Copiado!';
+  setTimeout(()=>{ b.textContent='📋 Copiar'; },1600);
+});
+</script>
+</body>
+</html>
