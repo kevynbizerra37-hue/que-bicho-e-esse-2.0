@@ -86,9 +86,8 @@ function sortearFases(){
       while(daCaverna.length<porCaverna){
         if(!deck.length) deck=shuffle(catalogo);
         // pega o primeiro do baralho que ainda não saiu NESTA caverna
-        const k=deck.findIndex(id=>!daCaverna.includes(id));
-        if(k===-1){ deck=shuffle(catalogo); continue; }
-        daCaverna.push(deck.splice(k,1)[0]);
+      const k0=daCaverna.findIndex(id=>ANIMAIS[id].som);
+      if(k0>0) [daCaverna[0],daCaverna[k0]]=[daCaverna[k0],daCaverna[0]];
       }
       sorteio.push(daCaverna);
     }
