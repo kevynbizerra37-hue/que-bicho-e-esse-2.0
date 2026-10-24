@@ -91,9 +91,20 @@ function sortearFases(){
         if(k===-1){ deck=shuffle(catalogo); continue; }
         daCaverna.push(deck.splice(k,1)[0]);
       }
+      // o primeiro animal da caverna é o da fase do som: tem que ter áudio
+      const k0=daCaverna.findIndex(id=>ANIMAIS[id].som);
+      if(k0>0) [daCaverna[0],daCaverna[k0]]=[daCaverna[k0],daCaverna[0]];
       sorteio.push(daCaverna);
     }
     if(_chave(sorteio)!==anterior) break;   // não repetir a partida anterior
+  }
+  G.fases=sorteio;
+  // Cada caverna sorteia se a 2ª etapa será a sombra ou a pergunta de
+  // característica. Com a narração ligada, varianteEtapa2() força a
+  // pergunta — a sombra não é jogável sem enxergar.
+  G.variantes=sortearVariantes();
+  save();
+}
   }
   G.fases=sorteio;
   // Cada caverna sorteia se a 2ª etapa será a sombra ou a pergunta de
