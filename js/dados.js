@@ -206,6 +206,7 @@ const ANIMAIS = {
     habitat: 'Oceano Atlântico',
     tracos: { penas:false, pelo:false, casco:true, voa:false, nada:true, sobe:false, comeFrutas:false, comeCarne:false, comeInsetos:false },
     curiosidade: 'A tartaruga-marinha nada no Oceano Atlântico! 🌊 Ela volta à mesma praia onde nasceu para desovar.',
+  },
 
     caranguejo: {
     id: 'caranguejo',
