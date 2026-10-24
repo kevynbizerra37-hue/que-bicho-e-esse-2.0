@@ -21,9 +21,30 @@ Jogo educativo para crianças pequenas descobrirem animais brasileiros pelo **so
 - Um mapa só, com trilhas: o sapo anda pelo caminho de terra. São 6 cavernas, e os animais são sorteados a cada partida.
 - Três etapas por caverna, com charadas e perguntas de característica (penas, pelo, voa, nada…).
 - Narração completa e jogo inteiro pelo teclado.
-- Ilustrações próprias dos 8 animais no lugar dos emojis.
+- Ilustrações próprias dos 8 primeiros animais no lugar dos emojis.
 - Funciona sem internet: a fonte vem junto com o jogo.
 - Layout ajustado para notebook, monitor Full HD, projetor e celular.
+
+## O que mudou na 2.1
+
+- **Pontuação:** as coroas de uma caverna só entram no placar quando ela termina. Antes dava para acertar a 1ª etapa, voltar ao mapa e entrar de novo para ganhar as mesmas coroas várias vezes. A celebração mostra quantas coroas a caverna rendeu.
+- **Movimento:** o sapo anda na mesma velocidade em qualquer monitor (em telas de 120/144 Hz ele andava o dobro e passava direto das curvas) e não volta da caverna deslizando.
+- **Acessibilidade:** as cavernas viraram botões (Tab + ENTER, e o leitor de tela diz se estão abertas ou fechadas); ao trocar de fase o foco vai para o título; a ajuda e as configurações prendem o foco e devolvem ao fechar; a sombra tem descrição para leitor de tela; quem ativa "reduzir movimento" no sistema fica sem animações piscando.
+- **5 animais novos:** tucano, jacaré, bicho-preguiça, lobo-guará e boto-cor-de-rosa.
+
+### Para a equipe de design: arquivos que faltam
+
+Os animais novos já estão no jogo usando emoji e um bipe no lugar do desenho e do som. Basta colocar os arquivos **com estes nomes exatos** nas pastas (sem mexer no código):
+
+| Animal | Desenho (`assets/images/animais/`) | Som (`assets/sounds/`) |
+|---|---|---|
+| Tucano | `tucano.png` | `tucano.mp3` |
+| Jacaré | `jacare.png` | `jacare.mp3` |
+| Bicho-preguiça | `preguica.png` | `preguica.mp3` |
+| Lobo-guará | `loboguara.png` | `loboguara.mp3` |
+| Boto-cor-de-rosa | `boto.png` | `boto.mp3` |
+
+Desenho: PNG quadrado (512×512), **fundo transparente** (a fase da sombra pinta o desenho de preto). Som: MP3 com o bicho logo no começo; o jogo toca só os primeiros 8 segundos. Enquanto um animal não tiver desenho, a 2ª etapa dele é sempre a pergunta (penas, pelo, voa…), e não a sombra.
 
 ## Rodar no computador
 
