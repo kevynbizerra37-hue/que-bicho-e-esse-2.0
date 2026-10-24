@@ -206,6 +206,27 @@ const ANIMAIS = {
     habitat: 'Oceano Atlântico',
     tracos: { penas:false, pelo:false, casco:true, voa:false, nada:true, sobe:false, comeFrutas:false, comeCarne:false, comeInsetos:false },
     curiosidade: 'A tartaruga-marinha nada no Oceano Atlântico! 🌊 Ela volta à mesma praia onde nasceu para desovar.',
+
+    caranguejo: {
+    id: 'caranguejo',
+    nome: 'Caranguejo',
+    artigo: 'o',
+    emoji: '🦀',
+    som: null,   // quando tiver o áudio: 'assets/sounds/caranguejo.mp3'
+    tom: [700, 520, 700, 520, 700],
+    onomatopeia: 'Clac! Clac!',
+    charadas: [
+      'Ando de lado, tenho duas pinças bem fortes e uma casca dura que me protege. Quem sou eu?',
+      'Moro em buracos na lama do manguezal, tenho dez patas e meus olhos ficam em cima de hastinhas. Quem sou eu?',
+      'Meu esqueleto fica do lado de fora do corpo e eu troco de casca quando fico grande. Quem sou eu?',
+    ],
+    audiodescricao: 'Um bichinho de corpo redondo e achatado, coberto por uma casca dura, com duas pinças grandes na frente, olhos em cima de hastes e várias patas finas nas laterais.',
+    libras: null,
+    imagem: 'assets/images/animais/caranguejo.svg',   // ou .png, se você converter
+    cor: 'linear-gradient(135deg,#FF7043,#BF360C)',
+    habitat: 'Manguezal',
+    tracos: { penas:false, pelo:false, casco:true, voa:false, nada:false, sobe:false, comeFrutas:false, comeCarne:false, comeInsetos:false },
+    curiosidade: 'O caranguejo vive no Manguezal! 🦀 Ele tem o esqueleto por fora do corpo e troca de casca quando cresce.',
   },
 
 };
