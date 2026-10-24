@@ -20,6 +20,7 @@ const G = {
   idx:0,                          // caverna em que a criança está
   fase:0,                         // etapa dentro da caverna (0,1,2)
   score:0, combo:0,
+  ptsCaverna:0,                   // coroas ganhas na caverna em curso (ver responder)
   fases:[],                       // fases[caverna][etapa] = id do animal
   variantes:[],                   // 'sombra' ou 'traco' na 2a etapa de cada caverna
   pergunta:null,                  // pergunta de caracteristica em curso
@@ -106,6 +107,10 @@ function sortearVariantes(){
 }
 function varianteEtapa2(){
   if(VOZ.ligada) return 'traco';
+  // Sem desenho próprio a sombra seria a de um emoji, às vezes genérico
+  // demais (🐦 serve para qualquer passarinho): vai a pergunta no lugar
+  const a=animalAtual();
+  if(a && !a.imagem) return 'traco';
   return G.variantes[G.idx]==='traco' ? 'traco' : 'sombra';
 }
 
@@ -243,6 +248,18 @@ function showSc(id){
   document.getElementById('backbtn').style.display= ['p1','p2','p2t','p3','p4'].includes(id)?'block':'none';
   atualizarBotaoRepetir();
   if(id==='map' && prev!=='map') narrarMapa();
+  if(prev!==id) focarTitulo(id);
+}
+// Ao trocar de tela, o foco ficava no botão da tela anterior, que sumiu:
+// o leitor de tela (NVDA, TalkBack) se perdia e a criança não sabia que
+// a fase tinha mudado. Agora o foco vai para o título da tela nova.
+// Com a narração do jogo ligada quem cuida do foco é ela (focarPrimeiraOpcao).
+function focarTitulo(id){
+  if(VOZ.ligada) return;
+  const t=document.querySelector('#sc-'+id+' h1[tabindex="-1"]');
+  if(!t) return;
+  _focoProgramatico=true;
+  try{ t.focus({preventScroll:true}); } finally { _focoProgramatico=false; }
 }
 
 // No mapa a criança cega não tem como guiar o sapo pelo cenário, então
@@ -271,6 +288,8 @@ function updateHUD(){
   drawProg();
 }
 function addPts(n){ G.score+=n; save(); updateHUD(); }
+// Quanto vale cada etapa: cheio no primeiro palpite, metade depois de errar
+const PONTOS={ som:25, sombra:20, traco:20, charada:30, bonus:30 };
 
 let _fbT=null;
 function feedback(msg, ok){
@@ -513,8 +532,39 @@ function listaDeOpcoes(gridId){
 // ========= CONFIGURAÇÕES =========
 function toggleCfg(){
   const m=document.getElementById('cfgmdf');
-  m.classList.toggle('open');
+  alternarJanela(m);
   if(m.classList.contains('open')) narrar('Configurações abertas.', {guardar:false});
+}
+// Abre ou fecha uma janela (ajuda, configurações) cuidando do foco: ao
+// abrir ele entra na janela, ao fechar volta para o botão que a abriu.
+// Antes o Tab continuava passeando pelos botões escondidos atrás dela.
+function alternarJanela(m){
+  const abrir=!m.classList.contains('open');
+  m.classList.toggle('open', abrir);
+  if(abrir){
+    m._voltar=document.activeElement;
+    const primeiro=m.querySelector('button, input, [tabindex="0"]');
+    if(primeiro){ _focoProgramatico=true; try{ primeiro.focus(); } finally { _focoProgramatico=false; } }
+  } else {
+    const v=m._voltar; m._voltar=null;
+    // getClientRects e não offsetParent: os botões fixos (💡, ⚙️) não têm offsetParent
+    if(v && v.focus && v.getClientRects().length) v.focus();
+  }
+}
+function fecharJanela(id){
+  const m=document.getElementById(id);
+  if(m.classList.contains('open')) alternarJanela(m);
+}
+// Tab e Shift+Tab dão a volta dentro da janela aberta
+function prenderFoco(e){
+  if(e.key!=='Tab') return;
+  const m=e.currentTarget;
+  const itens=[...m.querySelectorAll('button, input')].filter(el=>!el.disabled && el.getClientRects().length);
+  if(!itens.length) return;
+  const i=itens.indexOf(document.activeElement);
+  const prox = e.shiftKey ? (i<=0 ? itens.length-1 : i-1) : (i===itens.length-1 ? 0 : i+1);
+  e.preventDefault();
+  itens[prox].focus();
 }
 function setNarracao(ligada){
   VOZ.ligada=!!ligada;
@@ -619,19 +669,30 @@ function buildPortals(){
 
   MAPA.cavernas.forEach((pos,i)=>{
     const feito=G.done.includes(i); const aberta=cavernaAberta(i);
-    const div=document.createElement('div');
+    // <button>: dá para chegar com o Tab e entrar com ENTER, e o leitor de
+    // tela diz se a caverna está aberta, fechada ou já feita.
+    const div=document.createElement('button');
+    div.type='button';
     div.className='portal '+(feito?'don':aberta?'ulk':'lck');
     div.id='portal-'+i; div.style.left=pos.x+'px'; div.style.top=pos.y+'px'; div.dataset.idx=i;
     if(feito){
       const achados=animaisDaCaverna(i);
       div.innerHTML=`<span class="portal-emoji portal-trio">${achados.map(figura).join('')}</span>`
         +`<span class="portal-name">${achados.length} animais</span><span class="portal-star">⭐</span>`;
+      div.setAttribute('aria-label',`Caverna ${i+1}, completa: ${achados.map(a=>a.nome).join(', ')}`);
+      div.setAttribute('aria-disabled','true');
     } else {
       // Cavernas fechadas são todas iguais: nada aqui pode revelar o
       // animal, senão a criança já entra sabendo a resposta.
-      div.innerHTML=`<span class="portal-emoji">${aberta?'❓':'🔒'}</span><span class="portal-name">Caverna ${i+1}</span>`;
-      if(aberta) div.onclick=()=>enterLevel(i);
+      div.innerHTML=`<span class="portal-emoji" aria-hidden="true">${aberta?'❓':'🔒'}</span><span class="portal-name">Caverna ${i+1}</span>`;
+      div.setAttribute('aria-label', aberta ? `Caverna ${i+1}, aberta. Aperte ENTER para entrar.`
+                                            : `Caverna ${i+1}, fechada. Termine a caverna ${i} primeiro.`);
+      if(aberta) div.onclick=e=>{ e.stopPropagation(); enterLevel(i); };
+      else div.setAttribute('aria-disabled','true');
     }
+    div.addEventListener('focus',()=>{
+      if(!_focoProgramatico) narrar(div.getAttribute('aria-label'), {guardar:false});
+    });
     cont.appendChild(div);
   });
 
@@ -639,6 +700,16 @@ function buildPortals(){
   tp.style.left=MAPA.arvore.x+'px'; tp.style.top=MAPA.arvore.y+'px';
   tp.classList.toggle('unlocked', tudoCompleto());
   tp.onclick = tudoCompleto() ? mostrarFim : null;
+  // A árvore só vira botão quando libera o final
+  if(tudoCompleto()){
+    tp.setAttribute('role','button'); tp.tabIndex=0;
+    tp.setAttribute('aria-label','Árvore sagrada: ver o final');
+    tp.removeAttribute('aria-hidden');
+    tp.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); e.stopPropagation(); mostrarFim(); } };
+  } else {
+    tp.removeAttribute('role'); tp.removeAttribute('tabindex');
+    tp.setAttribute('aria-hidden','true'); tp.onkeydown=null;
+  }
 }
 
 // ========= PLAYER & CAMERA =========
@@ -742,10 +813,20 @@ function naTrilha(x,y){
 }
 
 // ========= LOOP =========
+// O passo é contado em "quadros de 60 Hz": num monitor de 120 ou 144 Hz
+// o loop roda mais vezes por segundo e o sapo andava o dobro, passando
+// direto das curvas. `q` diz quantos quadros de 60 Hz se passaram.
 function startLoop(){
   if(G.raf) cancelAnimationFrame(G.raf);
-  function loop(){ if(G.screen==='map' && !modalAberto()) movePlayer(); G.raf=requestAnimationFrame(loop); }
-  loop();
+  let antes=null;
+  function loop(agora){
+    // Limite de 3: voltando de outra aba, o sapo não dá um pulo enorme
+    const q = antes===null ? 1 : Math.min(3, Math.max(0.25, (agora-antes)/(1000/60)));
+    antes=agora;
+    if(G.screen==='map' && !modalAberto()) movePlayer(q);
+    G.raf=requestAnimationFrame(loop);
+  }
+  G.raf=requestAnimationFrame(loop);
 }
 // Quanto o sapo aceita escorregar de lado para dobrar uma curva, em
 // pixels do mapa. A trilha vira o tempo todo, e a criança segura uma
@@ -808,7 +889,7 @@ function escorregarNaCurva(sx, sy){
   }
 }
 
-function movePlayer(){
+function movePlayer(q=1){
   let ix=0,iy=0;
   if(G.keys['ArrowLeft']||G.keys['a']||G.keys['A']) ix-=1;
   if(G.keys['ArrowRight']||G.keys['d']||G.keys['D']) ix+=1;
@@ -823,13 +904,13 @@ function movePlayer(){
   // cima da caverna. ACC caiu junto para ele levar o mesmo tempinho até
   // engatar o passo, em vez de sair disparado do lugar parado.
   const ACC=0.25, FRICTION=0.78, MAX=2.2;
-  G.vx=(G.vx||0)+ix*ACC;
-  G.vy=(G.vy||0)+iy*ACC;
+  G.vx=(G.vx||0)+ix*ACC*q;
+  G.vy=(G.vy||0)+iy*ACC*q;
   // O freio é por eixo, e não só quando a criança larga tudo. Soltando a
   // seta de descer e segurando só a da direita, o sapo continuava caindo
   // para baixo de lado — ia parar no mato em vez de seguir a trilha.
-  if(!ix) G.vx*=FRICTION;
-  if(!iy) G.vy*=FRICTION;
+  if(!ix) G.vx*=Math.pow(FRICTION,q);
+  if(!iy) G.vy*=Math.pow(FRICTION,q);
   // Sobra de velocidade pequena demais para render pixel vira zero: é o
   // que deixa o sapo andando reto para a ajuda de curva reconhecer.
   if(Math.abs(G.vx)<0.05) G.vx=0;
@@ -844,7 +925,7 @@ function movePlayer(){
 
   // Cada eixo é testado sozinho: assim, ao esbarrar no mato de lado, o
   // sapo escorrega pela beirada da trilha em vez de travar de vez.
-  moverNaTrilha(G.vx, G.vy);
+  moverNaTrilha(G.vx*q, G.vy*q);
 
   const pl=document.getElementById('player');
   pl.style.left=G.px+'px'; pl.style.top=G.py+'px';
@@ -877,7 +958,9 @@ function checkNear(){
 // hora a narração e o som do bicho que a etapa acabava de começar.
 function enterLevel(i){
   if(!cavernaAberta(i) || G.done.includes(i)) return;
-  G.idx=i; G.combo=0;
+  G.idx=i; G.combo=0; G.ptsCaverna=0;
+  // Sem isto o sapo voltava da caverna ainda deslizando com o embalo de antes
+  G.keys={}; G.vx=0; G.vy=0;
   setupP1();
 }
 
@@ -992,9 +1075,13 @@ function responder(opt, card, pontos, msgOk, proxima){
   if(opt.id===animalAtual().id){
     G.travado=true;
     card.classList.add('ok');
-    addPts(G.firstTry?pontos:Math.round(pontos/2));
+    // As coroas da caverna só entram no placar quando ela termina (setupP4).
+    // Somadas aqui, dava para acertar o som, voltar ao mapa, entrar de novo
+    // e ganhar as mesmas coroas quantas vezes quisesse.
+    const ganhou=G.firstTry?pontos:Math.round(pontos/2);
+    G.ptsCaverna+=ganhou;
     G.combo++;
-    feedback(msgOk,true);
+    feedback(`${msgOk} +${ganhou} 👑`,true);
     avancarDepoisDoAcerto(opt, proxima);
   } else {
     // A célula inteira treme, para o alto-falante acompanhar o card
@@ -1031,7 +1118,7 @@ function setupP1(){
   document.getElementById('p1-onoma').textContent=animal.onomatopeia||'???';
   montarLibras(document.getElementById('p1-libras'), animal);
   buildOptions({grid:'p1grid', classe:'p1card', comSom:true, onPick:(opt,card)=>{
-    responder(opt,card,25,'Correto! 🎉',setupP2);
+    responder(opt,card,PONTOS.som,'Correto! 🎉',setupP2);
   }});
 
   // Enunciado → som do bicho → opções → foco. Um item de cada vez: cada
@@ -1079,8 +1166,10 @@ function setupP2Sombra(){
   showSc('p2');
   const animal=animalAtual();
   document.getElementById('shadow-anim').innerHTML=figura(animal);
+  // A sombra é só imagem: o leitor de tela lê a audiodescrição no lugar dela
+  document.getElementById('shadow-desc').textContent='A sombra é assim: '+animal.audiodescricao;
   buildOptions({grid:'p2grid', classe:'p2card', decorar:(card,opt)=>{ card.style.background=opt.cor; }, onPick:(opt,card)=>{
-    responder(opt,card,20,'Incrível! 🌟',setupP3);
+    responder(opt,card,PONTOS.sombra,'Incrível! 🌟',setupP3);
   }});
   // A audiodescrição é o que substitui a sombra para quem não enxerga.
   tocarSequencia([
@@ -1111,7 +1200,7 @@ function setupP2Traco(){
   buildOptions({grid:'p2tgrid', classe:'p2tcard',
     filtro:a=>!temTraco(a,p.traco),
     onPick:(opt,card)=>{
-      responder(opt,card,20,'Isso mesmo! 🌟',setupP3);
+      responder(opt,card,PONTOS.traco,'Isso mesmo! 🌟',setupP3);
     }});
   tocarSequencia([
     {fala:`${ondeEstou()} ${p.texto}`},
@@ -1127,7 +1216,7 @@ function setupP3(){
   const texto=charadaDe(animalAtual());
   document.getElementById('p3-charada').textContent=texto;
   buildOptions({grid:'p3grid', classe:'p3card', onPick:(opt,card)=>{
-    responder(opt,card,30,'Você acertou a charada! 🧩',setupP4);
+    responder(opt,card,PONTOS.charada,'Você acertou a charada! 🧩',setupP4);
   }});
   tocarSequencia([
     {fala:`${ondeEstou()} Fase da charada. ${texto}`},
@@ -1180,7 +1269,11 @@ function setupP4(){
   // Marca a caverna antes de somar: addPts salva e redesenha o painel de
   // progresso, que ficava mostrando esta caverna como não feita.
   if(!G.done.includes(G.idx)) G.done.push(G.idx);
-  addPts(30);
+  const ganhas=G.ptsCaverna+PONTOS.bonus;
+  G.ptsCaverna=0;
+  addPts(ganhas);
+  document.getElementById('p4-bonus').textContent=
+    `👑 +${ganhas} coroas (${PONTOS.bonus} de bônus)`;
 
   // Confete: festa + os bichos do proprio catalogo, para continuar
   // certo depois de trocar os animais em dados.js.
@@ -1202,7 +1295,7 @@ function setupP4(){
   // narração diz o que fazer e já deixa o foco nele, para o ENTER valer.
   const seguir = tudoCompleto() ? 'ver o final' : 'voltar ao mapa';
   tocarSequencia([
-    {fala:`Parabéns! Você descobriu ${achados.length} animais. `
+    {fala:`Parabéns! Você descobriu ${achados.length} animais e ganhou ${ganhas} coroas. `
       + achados.map(a=>`${a.nome}. ${a.curiosidade}`).join(' ')},
     {fala:`Aperte ENTER para ${seguir}.`, guardar:false},
     {acao:()=>{ if(VOZ.ligada && G.screen==='p4') btn.focus(); }},
@@ -1267,14 +1360,19 @@ document.addEventListener('keydown',e=>{
     if(document.getElementById('confmdf').classList.contains('open')){
       document.getElementById('conf-nao').click(); return;
     }
-    document.getElementById('helpmdf').classList.remove('open');
-    document.getElementById('cfgmdf').classList.remove('open');
+    fecharJanela('helpmdf');
+    fecharJanela('cfgmdf');
     pararNarracao();
   }
 
   // Com a ajuda, as configurações ou o final abertos, o ENTER é do botão
   // em foco; o mapa por trás não pode entrar numa caverna ao mesmo tempo.
-  if(G.screen==='map' && !modalAberto()){
+  // ENTER num botão focado (uma caverna, a ajuda) é dele, não do mapa
+  // (só se ele estiver na tela: voltando da celebração, o foco fica no
+  // botão da tela que sumiu, e o ENTER tem que continuar valendo no mapa)
+  const enterNoBotao = e.key==='Enter' && e.target && e.target.tagName==='BUTTON'
+    && e.target.getClientRects().length>0;
+  if(G.screen==='map' && !modalAberto() && !enterNoBotao){
     if(e.key==='e'||e.key==='E'||e.key==='Enter'){
       let entrou=false;
       MAPA.cavernas.forEach((pos,i)=>{
@@ -1329,7 +1427,7 @@ function addTouchMove(vpId){
 }
 
 // ========= MODAL AJUDA =========
-function toggleHelp(){ document.getElementById('helpmdf').classList.toggle('open'); }
+function toggleHelp(){ alternarJanela(document.getElementById('helpmdf')); }
 
 // ========= BACK BUTTON =========
 document.getElementById('backbtn').onclick=()=>{ stopAnimalAudio(); buildPortals(); showSc('map'); checkNear(); };
@@ -1367,7 +1465,13 @@ window.addEventListener('DOMContentLoaded',()=>{
   atualizarBotoesIntro();
   conferirImagens();
   document.getElementById('confmdf').addEventListener('keydown', prenderFocoNaConfirmacao);
+  document.getElementById('helpmdf').addEventListener('keydown', prenderFoco);
+  document.getElementById('cfgmdf').addEventListener('keydown', prenderFoco);
   addTouchMove('vp1');
+  // Com o Tab numa caverna fora da tela, o navegador rolava o mapa por
+  // conta própria e a câmera (que usa transform) ficava desalinhada.
+  const vp=document.getElementById('vp1');
+  vp.addEventListener('scroll',()=>{ vp.scrollLeft=0; vp.scrollTop=0; });
   document.addEventListener('contextmenu',e=>e.preventDefault());
   // Reenquadra na hora: com o sapo parado o loop não mexe na câmera, e
   // girar o celular deixava o mapa torto até a criança andar.
