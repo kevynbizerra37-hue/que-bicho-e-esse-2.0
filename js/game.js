@@ -104,14 +104,6 @@ function sortearFases(){
   G.variantes=sortearVariantes();
   save();
 }
-  }
-  G.fases=sorteio;
-  // Cada caverna sorteia se a 2ª etapa será a sombra ou a pergunta de
-  // característica. Com a narração ligada, varianteEtapa2() força a
-  // pergunta — a sombra não é jogável sem enxergar.
-  G.variantes=sortearVariantes();
-  save();
-}
 function sortearVariantes(){
   return MAPA.cavernas.map(()=> Math.random()<0.5 ? 'sombra' : 'traco');
 }
