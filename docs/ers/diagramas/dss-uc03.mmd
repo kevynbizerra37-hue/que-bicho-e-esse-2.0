@@ -1,0 +1,22 @@
+sequenceDiagram
+  actor C as Criança
+  participant S as :Sistema
+  C->>S: entrarNaCaverna(número)
+  S-->>C: etapa do som: onomatopeia, som do animal e quatro opções
+  loop até acertar
+    C->>S: escolherOpção(animal)
+    S-->>C: retorno de erro, ou de acerto com as coroas da etapa
+  end
+  S-->>C: 2ª etapa: sombra ou pergunta de característica, com quatro opções
+  loop até acertar
+    C->>S: escolherOpção(animal)
+    S-->>C: retorno de erro ou de acerto
+  end
+  S-->>C: etapa da charada com quatro opções
+  loop até acertar
+    C->>S: escolherOpção(animal)
+    S-->>C: retorno de erro ou de acerto
+  end
+  S-->>C: celebração: três animais, curiosidades e coroas da caverna com 30 de bônus
+  C->>S: próximaCaverna()
+  S-->>C: mapa com a caverna concluída e a seguinte liberada

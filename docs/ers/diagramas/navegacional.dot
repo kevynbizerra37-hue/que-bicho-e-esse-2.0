@@ -1,0 +1,38 @@
+digraph N {
+  graph [rankdir=TB, fontname="Liberation Sans", nodesep=0.5, ranksep=0.5, pad=0.3, bgcolor="white", compound=true, newrank=true]
+  node  [shape=box, style="rounded,filled", fillcolor="#FFFFFF", color="#222222", fontname="Liberation Sans", fontsize=16, margin="0.22,0.1"]
+  edge  [fontname="Liberation Sans", fontsize=13, color="#333333", arrowsize=0.8]
+  abertura    [label="Tela de abertura"]
+  config      [label="Janela de configurações", style="rounded,dashed,filled", fillcolor="#F4F4F4"]
+  confirmacao [label="Janela de confirmação", style="rounded,dashed,filled", fillcolor="#F4F4F4"]
+  mapa        [label="Mapa de exploração"]
+  instrucoes  [label="Janela de instruções", style="rounded,dashed,filled", fillcolor="#F4F4F4"]
+  subgraph cluster_caverna {
+    label="Caverna (três etapas e celebração)"; fontname="Liberation Sans"; fontsize=14; style="rounded"; color="#777777"; margin=14;
+    som        [label="Etapa 1 — Som"]
+    sombra     [label="Etapa 2 — Sombra"]
+    traco      [label="Etapa 2 — Característica"]
+    charada    [label="Etapa 3 — Charada"]
+    celebracao [label="Celebração da caverna"]
+  }
+  final [label="Tela final"]
+  { rank=same; abertura; config }
+  { rank=same; mapa; instrucoes }
+  abertura -> config [dir=both, style=dashed, label=" engrenagem · ✕ "]
+  abertura -> confirmacao [label=" Jogar com progresso\n ou Apagar progresso"]
+  abertura -> mapa [label=" Jogar sem progresso\n ou Continuar"]
+  confirmacao -> mapa [label=" Sim, começar\n do zero"]
+  confirmacao -> abertura [label=" Não, voltar · ESC\n ou Sim, apagar", constraint=false]
+  mapa -> instrucoes [dir=both, style=dashed, label=" ajuda · ✕ "]
+  mapa -> som [label=" E · ENTER · toque na\n caverna liberada"]
+  som -> sombra [label=" acerto, variante sombra\n e narração desligada"]
+  som -> traco [label=" acerto, variante característica\n ou narração ligada"]
+  sombra -> charada [label=" acerto"]
+  traco -> charada [label=" acerto"]
+  charada -> celebracao [label=" acerto"]
+  celebracao -> final [label=" Ver o final\n (6ª caverna)"]
+  celebracao -> mapa [label=" Próxima\n caverna", constraint=false]
+  mapa -> final [label=" árvore sagrada, com as\n 6 cavernas concluídas", constraint=false]
+  final -> mapa [label=" Jogar de novo", constraint=false]
+  charada -> mapa [ltail=cluster_caverna, style=dashed, label=" ← VOLTAR\n (em qualquer etapa)", constraint=false]
+}

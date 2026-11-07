@@ -1,0 +1,20 @@
+flowchart TD
+  S((" ")):::ini --> A("Educador aciona o botão de configurações")
+  A --> B("Exibir narração, velocidade da voz e sons dos animais com os valores atuais")
+  B --> D1{"Voz?"}
+  D1 -->|"[navegador sem síntese de voz]"| C("Desabilitar a narração e exibir o aviso")
+  D1 -->|"[com síntese]"| D2
+  C --> D2{"Ajuste?"}
+  D2 -->|"[narração]"| G("Gravar; ao ligar, anunciar as teclas; ao desligar, calar a fala")
+  D2 -->|"[velocidade]"| I("Gravar a velocidade e confirmar por voz")
+  D2 -->|"[sons]"| J("Gravar; ao desligar, interromper o áudio")
+  G --> D3{"Mais?"}
+  I --> D3
+  J --> D3
+  D3 -->|"[outro ajuste]"| D2
+  D3 -->|"[pronto]"| K("Fechar as configurações pelo botão ✕ ou pela tecla ESC")
+  K --> F(((" "))):::fim
+
+  classDef ini fill:#000,stroke:#000,color:#000
+  classDef fim fill:#fff,stroke:#000
+  classDef uc fill:#F1F1F1,stroke:#222,stroke-dasharray: 5 3

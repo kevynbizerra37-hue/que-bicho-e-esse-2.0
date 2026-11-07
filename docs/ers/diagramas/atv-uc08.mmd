@@ -1,0 +1,19 @@
+flowchart TD
+  S((" ")):::ini --> A("Destacar a árvore sagrada no mapa e no minimapa")
+  A --> D1{"Como?"}
+  D1 -->|"[celebração da 6ª caverna]"| B("Acionar 'Ver o final'")
+  D1 -->|"[no mapa]"| C("Levar o sapo até a árvore e acionar E, ENTER ou toque, ou focá-la pelo TAB e acionar ENTER")
+  D1 -->|"[narração ligada]"| E("Acionar ENTER em qualquer ponto do mapa")
+  B --> G("Exibir a tela final com a mensagem e o total de coroas")
+  C --> G
+  E --> G
+  G --> D2{"Narração?"}
+  D2 -->|"[ligada]"| H("Narrar mensagem, total e instrução, focando 'Jogar de novo'")
+  D2 -->|"[desligada]"| I
+  H --> I("Criança aciona 'Jogar de novo'")
+  I --> J("Zerar placar e cavernas, sortear outros animais e reposicionar o sapo no mapa")
+  J --> F(((" "))):::fim
+
+  classDef ini fill:#000,stroke:#000,color:#000
+  classDef fim fill:#fff,stroke:#000
+  classDef uc fill:#F1F1F1,stroke:#222,stroke-dasharray: 5 3

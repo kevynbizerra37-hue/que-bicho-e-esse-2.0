@@ -1,0 +1,27 @@
+sequenceDiagram
+  participant Et as :Etapa do Som
+  participant A as :CanalDeAudio
+  participant V as :Narração
+  participant SS as speechSynthesis
+  participant S as :SomDoAnimal
+  participant AU as Audio / Web Audio
+  Et->>A: tocarSequencia([espera, fala, som, opções, foco], repetível)
+  A->>A: silenciarTudo(): novo token e fila vazia
+  A->>V: falarAgora(enunciado)
+  V->>SS: speak(texto em pt-BR, velocidade escolhida)
+  SS-->>V: onend (ou vigia de tempo)
+  V-->>A: seguir()
+  A->>S: tocarSomAgora(animal)
+  S->>AU: new Audio(som).play()
+  alt o som termina
+    AU-->>S: onended
+  else o arquivo falha ou não existe
+    AU-->>S: onerror
+    S->>AU: playBeepSequence(tom) por cerca de 1 s
+  else passa de 8 s
+    S->>AU: abaixa o volume e pausa
+  end
+  S-->>A: seguir()
+  A->>V: falarAgora(lista de opções)
+  V-->>A: seguir()
+  A->>Et: focarPrimeiraOpcao()

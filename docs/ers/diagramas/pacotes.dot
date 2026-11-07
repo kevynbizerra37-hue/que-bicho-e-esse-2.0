@@ -1,0 +1,16 @@
+digraph P {
+  graph [rankdir=TB, fontname="Liberation Sans", nodesep=0.7, ranksep=0.8, pad=0.35, bgcolor="white"]
+  node  [shape=tab, style=filled, fillcolor="#F6F6F6", color="#222222", fontname="Liberation Sans", fontsize=14, margin="0.3,0.15"]
+  edge  [style=dashed, arrowhead=vee, color="#333333", fontname="Liberation Sans", fontsize=12]
+  apresentacao [label=<<B>Apresentação</B><BR/><BR/>index.html: telas e janelas<BR/>css/styles.css<BR/>assets/images · assets/sounds · assets/fonts>]
+  logica [label=<<B>Lógica de Negócio</B><BR/><BR/>js/game.js<BR/>sorteio · etapas · pontuação<BR/>exploração do mapa · canal de áudio<BR/>narração · configurações · persistência>]
+  dados [label=<<B>Dados</B><BR/><BR/>js/dados.js: ANIMAIS · PERGUNTAS · MAPA<BR/>js/trilhas.js: TRILHAS>]
+  navegador [label=<<B>Recursos do Navegador</B><BR/><BR/>Web Speech API · Web Audio API<BR/>HTMLAudioElement · localStorage<BR/>Canvas 2D>]
+  autoria [label=<<B>Ferramenta de Autoria</B><BR/><BR/>ferramentas/gerar-trilhas.html<BR/>(fora do produto entregue)>]
+  apresentacao -> logica [label="  «usa»"]
+  logica -> dados [label="  «usa»"]
+  logica -> navegador [label="  «usa»"]
+  autoria -> dados [label="  «gera» js/trilhas.js"]
+  { rank=same; dados; navegador }
+  { rank=same; logica; autoria }
+}

@@ -1,0 +1,21 @@
+flowchart TD
+  S((" ")):::ini --> D1{"Charadas?"}
+  D1 -->|"[nenhuma]"| A("Usar o texto 'Quem sou eu?'")
+  D1 -->|"[uma]"| B("Usar a única charada")
+  D1 -->|"[duas ou mais]"| C("Sortear uma diferente da última usada")
+  A --> E("Exibir a charada e montar quatro opções embaralhadas")
+  B --> E
+  C --> E
+  E --> D2{"Narração?"}
+  D2 -->|"[ligada]"| G("Narrar caverna, etapa, charada e opções numeradas")
+  D2 -->|"[desligada]"| H
+  G --> H("Criança escolhe uma opção")
+  H --> D3{"Correta?"}
+  D3 -->|"[não]"| I("Sinalizar o erro e registrar que errou")
+  I --> H
+  D3 -->|"[sim]"| J("Travar as opções, somar 30 coroas às da caverna, ou 15 após erro, e avançar para a celebração")
+  J --> F(((" "))):::fim
+
+  classDef ini fill:#000,stroke:#000,color:#000
+  classDef fim fill:#fff,stroke:#000
+  classDef uc fill:#F1F1F1,stroke:#222,stroke-dasharray: 5 3

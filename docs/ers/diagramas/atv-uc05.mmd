@@ -1,0 +1,16 @@
+flowchart TD
+  S((" ")):::ini --> A("Pintar de preto a ilustração do animal, ou o emoji, sobre o fundo iluminado, com a audiodescrição em texto oculto")
+  A --> C("Montar quatro opções com a cor de cada animal, embaralhadas")
+  C --> D2{"Narração?"}
+  D2 -->|"[ligada]"| E("Ler a audiodescrição e anunciar as opções numeradas")
+  D2 -->|"[desligada]"| G
+  E --> G("Criança escolhe uma opção")
+  G --> D3{"Correta?"}
+  D3 -->|"[não]"| H("Sinalizar o erro e registrar que errou")
+  H --> G
+  D3 -->|"[sim]"| I("Travar as opções, somar 20 coroas às da caverna, ou 10 após erro, e avançar para a charada")
+  I --> F(((" "))):::fim
+
+  classDef ini fill:#000,stroke:#000,color:#000
+  classDef fim fill:#fff,stroke:#000
+  classDef uc fill:#F1F1F1,stroke:#222,stroke-dasharray: 5 3
