@@ -1,0 +1,21 @@
+flowchart TD
+  S((" ")):::ini --> A("Criança aciona um comando de direção: setas, WASD ou arrasto na tela")
+  A --> B("Deslocar o sapo só sobre a trilha, conduzindo-o nas curvas, e atualizar câmera e minimapa")
+  B --> D4{"Perto?"}
+  D4 -->|"[caverna liberada a menos de 110 px]"| U("Exibir o aviso de entrada")
+  D4 -->|"[longe]"| V("Ocultar o aviso de entrada")
+  U --> D5{"Comando?"}
+  V --> D5
+  D5 -->|"[continua andando]"| A
+  D5 -->|"[E, ENTER, toque ou TAB + ENTER]"| D6{"Destino?"}
+  D6 -->|"[caverna liberada perto ou em foco]"| W["Abrir a caverna: UC03"]:::uc
+  D6 -->|"[árvore liberada perto ou em foco]"| Y["Tela final: UC08"]:::uc
+  D6 -->|"[ENTER com narração ligada]"| Z("Entrar na próxima caverna liberada ou na tela final")
+  D6 -->|"[nenhum]"| A
+  W --> F(((" "))):::fim
+  Y --> F
+  Z --> F
+
+  classDef ini fill:#000,stroke:#000,color:#000
+  classDef fim fill:#fff,stroke:#000
+  classDef uc fill:#F1F1F1,stroke:#222,stroke-dasharray: 5 3

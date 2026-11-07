@@ -1,0 +1,26 @@
+flowchart TD
+  S((" ")):::ini --> A("Criança aciona Jogar ou Continuar na tela de abertura")
+  A --> D1{"Botão?"}
+  D1 -->|"[Continuar]"| B("Recuperar placar, cavernas concluídas, sorteio e variantes gravados")
+  B --> D2{"Válido?"}
+  D2 -->|"[sorteio válido]"| C("Exibir o mapa com as cavernas concluídas assinaladas")
+  C --> F1(((" "))):::fim
+  D2 -->|"[inválido]"| X("Descartar o sorteio e as cavernas concluídas")
+  D1 -->|"[Jogar]"| D3{"Progresso?"}
+  D3 -->|"[há progresso]"| E("Exibir 'Começar do zero?' com o que será perdido")
+  E --> D4{"Confirma?"}
+  D4 -->|"[não]"| H("Permanecer na tela de abertura")
+  H --> F2(((" "))):::fim
+  D4 -->|"[sim]"| G("Zerar o placar e as cavernas concluídas")
+  D3 -->|"[sem progresso]"| G
+  G --> I("Sortear três animais distintos por caverna, do baralho embaralhado, com um animal que tenha som na etapa 1")
+  X --> I
+  I --> D5{"Repetiu?"}
+  D5 -->|"[igual à partida anterior, até 10 tentativas]"| I
+  D5 -->|"[diferente]"| K("Sortear a variante da 2ª etapa de cada caverna e gravar tudo no navegador")
+  K --> M("Posicionar o sapo no ponto inicial e exibir o mapa, o placar, o minimapa e o painel")
+  M --> F3(((" "))):::fim
+
+  classDef ini fill:#000,stroke:#000,color:#000
+  classDef fim fill:#fff,stroke:#000
+  classDef uc fill:#F1F1F1,stroke:#222,stroke-dasharray: 5 3

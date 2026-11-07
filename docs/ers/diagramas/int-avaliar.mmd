@@ -1,0 +1,26 @@
+sequenceDiagram
+  actor C as Criança
+  participant G as :GradeDeOpções
+  participant Et as :ControleDasEtapas
+  participant J as :EstadoDoJogo
+  participant P as :Persistência
+  participant A as :CanalDeAudio
+  C->>G: clique, toque ou tecla 1 a 4
+  G->>Et: responder(opção, card, pontos)
+  alt etapa já acertada (travada)
+    Et-->>G: ignora o comando
+  else opção correta
+    Et->>J: travado = verdadeiro
+    Et->>J: ptsCaverna += pontos ou metade arredondada
+    Et-->>C: borda verde e mensagem de acerto com as coroas ganhas
+    Et->>A: "Acertou! Era ..." (com a narração ligada)
+    Et->>Et: avancarDepoisDoAcerto(): próxima etapa em 0,9 s ou ao fim da fala
+    opt acerto da charada, a 3ª etapa
+      Et->>J: setupP4(): addPts(ptsCaverna + 30 de bônus)
+      J->>P: save() no localStorage
+    end
+  else opção errada
+    Et->>J: firstTry = falso e combo = 0
+    Et-->>C: card vermelho treme e "Tente novamente!"
+    Et->>A: "Não é ... Tente de novo." (com a narração ligada)
+  end

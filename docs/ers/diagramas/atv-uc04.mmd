@@ -1,0 +1,26 @@
+flowchart TD
+  S((" ")):::ini --> A("Exibir a onomatopeia e montar quatro opções: o animal da etapa e três distratores do catálogo, embaralhados")
+  A --> D1{"Narração?"}
+  D1 -->|"[ligada]"| C("Narrar caverna, etapa, enunciado e onomatopeia")
+  D1 -->|"[desligada]"| D2
+  C --> D2{"Sons?"}
+  D2 -->|"[ligados]"| E("Tocar o som gravado por até 8 s ou, se falhar, a assinatura de reserva")
+  D2 -->|"[desligados]"| D4
+  E --> D4{"Narração?"}
+  D4 -->|"[ligada]"| H("Anunciar as opções numeradas e focar a primeira")
+  D4 -->|"[desligada]"| I
+  H --> I("Aguardar a ação da criança")
+  I --> D5{"Ação?"}
+  D5 -->|"[ouvir uma opção ou tecla S]"| J("Tocar o som daquele animal")
+  J --> I
+  D5 -->|"[tecla R]"| K("Repetir enunciado, som e opções")
+  K --> I
+  D5 -->|"[escolher uma opção]"| D6{"Correta?"}
+  D6 -->|"[não]"| L("Sinalizar o erro e registrar que errou")
+  L --> I
+  D6 -->|"[sim]"| M("Travar as opções, somar 25 coroas às da caverna, ou 13 após erro, e avançar para a 2ª etapa")
+  M --> F(((" "))):::fim
+
+  classDef ini fill:#000,stroke:#000,color:#000
+  classDef fim fill:#fff,stroke:#000
+  classDef uc fill:#F1F1F1,stroke:#222,stroke-dasharray: 5 3

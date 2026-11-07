@@ -1,0 +1,21 @@
+flowchart TD
+  S((" ")):::ini --> A("Zerar as coroas da caverna e o movimento do sapo e registrar que a etapa 1 ainda não foi errada")
+  A --> B["Etapa do som: UC04"]:::uc
+  B --> D1{"2ª etapa?"}
+  D1 -->|"[narração ligada, animal sem ilustração ou variante característica]"| D3{"Pergunta?"}
+  D1 -->|"[variante sombra, narração desligada e animal com ilustração]"| E["Etapa da sombra: UC05"]:::uc
+  D3 -->|"[há pergunta com resposta única]"| G["Etapa da característica: UC06"]:::uc
+  D3 -->|"[nenhuma serve]"| E
+  E --> H["Etapa da charada: UC07"]:::uc
+  G --> H
+  H --> I("Registrar a caverna como concluída, creditar ao placar as coroas da caverna mais 30 de bônus e gravar o progresso")
+  I --> J("Exibir a celebração com ilustração, nome, onomatopeia e curiosidade dos três animais e as coroas ganhas")
+  J --> D4{"Cavernas?"}
+  D4 -->|"[ainda falta caverna]"| L("Criança aciona 'Próxima caverna'; o sistema libera a seguinte e volta ao mapa")
+  L --> F1(((" "))):::fim
+  D4 -->|"[seis concluídas]"| N["Criança aciona 'Ver o final': UC08"]:::uc
+  N --> F2(((" "))):::fim
+
+  classDef ini fill:#000,stroke:#000,color:#000
+  classDef fim fill:#fff,stroke:#000
+  classDef uc fill:#F1F1F1,stroke:#222,stroke-dasharray: 5 3

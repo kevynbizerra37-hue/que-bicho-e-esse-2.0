@@ -60,6 +60,10 @@ Baixe o projeto (**Code → Download ZIP**), descompacte e abra o `index.html` n
 | Trilhas por onde o sapo anda | `js/trilhas.js`, gerado por `ferramentas/gerar-trilhas.html` quando o mapa muda |
 | Lógica do jogo | `js/game.js` |
 
+## Documentação
+
+A especificação de requisitos (ERS) do jogo está em [`docs/ers/`](docs/ers/), em PDF para ler e em Word para editar.
+
 ## Créditos
 
 - Fonte [Fredoka](https://fonts.google.com/specimen/Fredoka), licença SIL Open Font License (`assets/fonts/OFL.txt`).

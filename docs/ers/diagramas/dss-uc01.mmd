@@ -1,0 +1,14 @@
+sequenceDiagram
+  actor C as Criança
+  participant S as :Sistema
+  alt partida nova
+    C->>S: jogar()
+    opt existe progresso gravado
+      S-->>C: confirmação "Começar do zero?" com as cavernas e coroas a perder
+      C->>S: confirmar()
+    end
+    S-->>C: mapa com o sapo no ponto inicial, placar zerado e cavernas sorteadas
+  else retomar a partida gravada
+    C->>S: continuar()
+    S-->>C: mapa com as cavernas concluídas assinaladas e o placar gravado
+  end

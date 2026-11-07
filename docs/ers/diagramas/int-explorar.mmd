@@ -1,0 +1,25 @@
+sequenceDiagram
+  actor C as Criança
+  participant N as :Navegador
+  participant L as :LaçoDeAnimação
+  participant E as :Exploração
+  participant T as :MalhaDeTrilhas
+  participant V as :Câmera e Minimapa
+  participant P as :Caverna
+  C->>N: pressiona seta ou WASD
+  N->>E: keydown registra a direção em G.keys
+  loop a cada quadro (requestAnimationFrame)
+    L->>E: movePlayer(q), com q = tempo desde o quadro anterior, em quadros de 60 Hz
+    E->>E: velocidade com aceleração 0,25 e atrito 0,78 ajustados a q, limite de 2,2 px e passo igual à velocidade vezes q
+    loop cada pixel do passo, eixo X e eixo Y
+      E->>T: naTrilha(x, y)
+      T-->>E: verdadeiro ou falso
+    end
+    opt eixo travado com uma única direção pressionada
+      E->>T: escorregarNaCurva(): procura a trilha até 28 px para cada lado
+      T-->>E: célula de trilha ao lado
+    end
+    E->>V: snapCamera() e drawMini()
+    E->>P: checkNear(): distância até cada caverna
+    P-->>C: aviso "Aperte E" a menos de 110 px de caverna liberada
+  end

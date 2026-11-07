@@ -1,0 +1,14 @@
+flowchart TD
+  S((" ")):::ini --> A("Educador aciona 'Apagar progresso' na tela de abertura")
+  A --> B("Exibir a confirmação com as cavernas e coroas a perder, com foco em 'Não, voltar'")
+  B --> D1{"Confirma?"}
+  D1 -->|"[não ou ESC]"| C("Fechar sem apagar e devolver o foco")
+  C --> F1(((" "))):::fim
+  D1 -->|"[sim]"| E("Remover do navegador placar, cavernas concluídas, sorteio e variantes")
+  E --> G("Zerar placar e cavernas, reposicionar o sapo e sortear outros animais")
+  G --> I("Ocultar 'Continuar' e 'Apagar progresso' e exibir 'Progresso apagado!'")
+  I --> F2(((" "))):::fim
+
+  classDef ini fill:#000,stroke:#000,color:#000
+  classDef fim fill:#fff,stroke:#000
+  classDef uc fill:#F1F1F1,stroke:#222,stroke-dasharray: 5 3

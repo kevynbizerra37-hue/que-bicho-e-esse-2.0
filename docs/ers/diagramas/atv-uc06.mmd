@@ -1,0 +1,19 @@
+flowchart TD
+  S((" ")):::ini --> A("Selecionar as perguntas que o animal responde 'sim' e com ao menos três animais sem o traço")
+  A --> D1{"Pergunta?"}
+  D1 -->|"[nenhuma serve]"| B["Apresentar a sombra: UC05"]:::uc
+  B --> F1(((" "))):::fim
+  D1 -->|"[há pergunta]"| C("Sortear uma pergunta, exibir ícone e texto e montar quatro opções com distratores sem o traço")
+  C --> D2{"Narração?"}
+  D2 -->|"[ligada]"| G("Narrar caverna, etapa, pergunta e opções numeradas")
+  D2 -->|"[desligada]"| H
+  G --> H("Criança escolhe uma opção")
+  H --> D3{"Correta?"}
+  D3 -->|"[não]"| I("Sinalizar o erro e registrar que errou")
+  I --> H
+  D3 -->|"[sim]"| J("Travar as opções, somar 20 coroas às da caverna, ou 10 após erro, e avançar para a charada")
+  J --> F2(((" "))):::fim
+
+  classDef ini fill:#000,stroke:#000,color:#000
+  classDef fim fill:#fff,stroke:#000
+  classDef uc fill:#F1F1F1,stroke:#222,stroke-dasharray: 5 3
