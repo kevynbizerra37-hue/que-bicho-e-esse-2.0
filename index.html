@@ -16,7 +16,7 @@
   <button class="bbtn" id="backbtn">← VOLTAR</button>
 
   <!-- ══ CONFIGURAÇÕES ══ -->
-  <div class="helpmdf" id="cfgmdf" role="dialog" aria-label="Configurações">
+  <div class="helpmdf" id="cfgmdf" role="dialog" aria-modal="true" aria-label="Configurações">
     <div class="mbox">
       <button class="closehelp" onclick="toggleCfg()" aria-label="Fechar configurações">✕</button>
       <h2>⚙️ Configurações</h2>
@@ -63,9 +63,9 @@
   </div>
 
   <!-- FINAL DO JOGO -->
-  <div id="fim">
+  <div id="fim" role="dialog" aria-modal="true" aria-labelledby="fim-titulo">
     <div class="fim-box">
-      <h1>🏆 Você conseguiu!</h1>
+      <h1 id="fim-titulo">🏆 Você conseguiu!</h1>
       <p>Parabéns! Você descobriu<br />todos os animais das cavernas!</p>
       <div class="fim-pontos">👑 <span id="fim-score">0</span> coroas</div>
       <p>Jogue de novo: as cavernas<br />vão guardar outros animais!</p>
@@ -76,7 +76,7 @@
   <div id="gc">
     <!-- ══ INTRO ══ -->
     <div class="screen active" id="sc-intro">
-      <div class="intro-trees" id="intro-trees"></div>
+      <div class="intro-trees" id="intro-trees" aria-hidden="true"></div>
       <div class="intro-box">
         <div class="logo-box">
           <div class="logo-title">🌿 ANIMAL QUEST 🌿</div>
@@ -102,13 +102,13 @@
     <div class="screen map-screen" id="sc-map">
       <div id="wb1" class="world-badge">🌿 Fauna Brasileira</div>
       <div id="map-hud">👑 <span id="map-score-val">0</span></div>
-      <button id="helpbtn" onclick="toggleHelp()">💡</button>
-      <div class="minimap-wrap"><canvas id="minimap" width="120" height="80"></canvas></div>
+      <button id="helpbtn" onclick="toggleHelp()" aria-label="Como jogar">💡</button>
+      <div class="minimap-wrap" aria-hidden="true"><canvas id="minimap" width="120" height="80"></canvas></div>
       <div class="progress-bar" id="prog1"><div class="prog-title">Cavernas</div><div id="prog-list"></div></div>
-      <div class="helpmdf" id="helpmdf">
+      <div class="helpmdf" id="helpmdf" role="dialog" aria-modal="true" aria-labelledby="help-titulo">
         <div class="mbox">
-          <button class="closehelp" onclick="toggleHelp()">✕</button>
-          <h2>📋 Como jogar</h2>
+          <button class="closehelp" onclick="toggleHelp()" aria-label="Fechar a ajuda">✕</button>
+          <h2 id="help-titulo">📋 Como jogar</h2>
           <div class="mrow mrow-blue"><b>🕹️ Movimento</b><p>WASD / setas — toque e arraste no celular<br />O sapo só anda pelas trilhas de terra</p></div>
           <div class="mrow mrow-green"><b>🚪 Entrar na caverna</b><p>Chegue perto e aperte E ou ENTER<br />Ou toque na caverna</p></div>
           <div class="mrow mrow-brn"><b>🌳 Árvore sagrada</b><p>Complete as <span id="help-total">6</span> cavernas e vá até a árvore!</p></div>
@@ -127,11 +127,11 @@
 
     <!-- ══ FASE 1: SOM ══ -->
     <div class="screen" id="sc-p1">
-      <div class="ph-title" style="color:#69F0AE">🔊 Que bicho é esse?</div>
+      <h1 class="ph-title" tabindex="-1" style="color:#69F0AE">🔊 Que bicho é esse?</h1>
       <div class="ph-sub">Escute o som e escolha!</div>
 
       <div class="som-wrap">
-        <button class="sorb" id="sound-orb" onclick="playSound()">🔊</button>
+        <button class="sorb" id="sound-orb" onclick="playSound()" aria-label="Ouvir o som do bicho (tecla S)">🔊</button>
         <div class="onoma-box">
           <div class="onoma-label">🔊 O som deste animal é:</div>
           <div class="onoma-txt" id="p1-onoma"></div>
@@ -145,15 +145,16 @@
 
     <!-- ══ FASE 2: SOMBRA ══ -->
     <div class="screen" id="sc-p2">
-      <div class="ph-title" style="color:#E040FB">👁️ Sombra misteriosa</div>
+      <h1 class="ph-title" tabindex="-1" style="color:#E040FB">👁️ Sombra misteriosa</h1>
       <div class="ph-sub">Olhe a sombra e descubra!</div>
-      <div class="sbox"><div class="sanm" id="shadow-anim"></div><div class="scanl"></div></div>
+      <div class="sbox"><div class="sanm" id="shadow-anim" aria-hidden="true"></div><div class="scanl"></div>
+        <p class="sr-only" id="shadow-desc"></p></div>
       <div id="p2grid"></div>
     </div>
 
     <!-- ══ FASE 2b: PERGUNTA DE CARACTERÍSTICA ══ -->
     <div class="screen" id="sc-p2t">
-      <div class="ph-title" style="color:#80D8FF">🔎 Como é este bicho?</div>
+      <h1 class="ph-title" tabindex="-1" style="color:#80D8FF">🔎 Como é este bicho?</h1>
       <div class="ph-sub">Pense bem e escolha o animal certo!</div>
       <div class="traco-box">
         <div class="traco-icone" id="p2t-icone">🔎</div>
@@ -164,7 +165,7 @@
 
     <!-- ══ FASE 3: CHARADA ══ -->
     <div class="screen" id="sc-p3">
-      <div class="ph-title" style="color:#FFD740">🧩 Charada dos animais</div>
+      <h1 class="ph-title" tabindex="-1" style="color:#FFD740">🧩 Charada dos animais</h1>
       <div class="ph-sub">Leia com atenção e adivinhe!</div>
       <div class="charada-box">
         <div class="charada-icone">🧩</div>
@@ -175,14 +176,14 @@
 
     <!-- ══ FASE 4: CELEBRAÇÃO ══ -->
     <div class="screen" id="sc-p4">
-      <div id="confwrap"></div>
+      <div id="confwrap" aria-hidden="true"></div>
       <div class="p4content">
-        <div class="trophy">🏆</div>
-        <div class="p4-congrats">Parabéns! 🎉</div>
+        <div class="trophy" aria-hidden="true">🏆</div>
+        <h1 class="p4-congrats" tabindex="-1">Parabéns! 🎉</h1>
         <div class="p4-sub" id="p4-sub"></div>
         <div id="p4-animais"></div>
         <div id="p4-fatos"></div>
-        <div class="bonus-txt">⭐ +30 bônus! ⭐</div>
+        <div class="bonus-txt" id="p4-bonus"></div>
         <button class="pbtn pbtn-green" id="p4btn">Próxima caverna ▶</button>
       </div>
     </div>

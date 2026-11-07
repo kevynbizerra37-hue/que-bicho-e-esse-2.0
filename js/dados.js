@@ -19,7 +19,7 @@
 //  A fase da sombra pinta a imagem de preto: com fundo branco ela vira
 //  um quadrado preto. Sem imagem (null), o jogo usa o `emoji`, que
 //  continua valendo como reserva se o arquivo sumir.
-//  As 8 atuais foram geradas por IA (originais em alta resolução na pasta
+//  As 8 primeiras foram geradas por IA (originais em alta resolução na pasta
 //  imagens-originais/, fora do jogo), recortadas com a mesma margem e
 //  reduzidas para 512px.
 //
@@ -208,26 +208,124 @@ const ANIMAIS = {
     curiosidade: 'A tartaruga-marinha nada no Oceano Atlântico! 🌊 Ela volta à mesma praia onde nasceu para desovar.',
   },
 
-    caranguejo: {
-    id: 'caranguejo',
-    nome: 'Caranguejo',
+  // ── NOVOS ANIMAIS (2.1) ──
+  // As fichas já apontam para a imagem e o som com o nome do animal.
+  // Enquanto a equipe de design não coloca os arquivos nas pastas, o jogo
+  // usa o emoji no lugar do desenho e os bipes de `tom` no lugar do som,
+  // e a 2ª etapa vira a pergunta de característica (a sombra de um emoji
+  // genérico confundiria — o 🐦 do tucano parece qualquer passarinho).
+
+  tucano: {
+    id: 'tucano',
+    nome: 'Tucano',
     artigo: 'o',
-    emoji: '🦀',
-    som: null,   // quando tiver o áudio: 'assets/sounds/caranguejo.mp3'
-    tom: [700, 520, 700, 520, 700],
-    onomatopeia: 'Clac! Clac!',
+    emoji: '🐦',
+    som: 'assets/sounds/tucano.mp3',
+    tom: [698, 587, 698, 587, 523],
+    onomatopeia: 'Rék-rék-rék!',
     charadas: [
-      'Ando de lado, tenho duas pinças bem fortes e uma casca dura que me protege. Quem sou eu?',
-      'Moro em buracos na lama do manguezal, tenho dez patas e meus olhos ficam em cima de hastinhas. Quem sou eu?',
-      'Meu esqueleto fica do lado de fora do corpo e eu troco de casca quando fico grande. Quem sou eu?',
+      'Tenho um bico laranja enorme, maior que a minha cabeça, mas ele é levinho por dentro. Quem sou eu?',
+      'Sou uma ave de penas pretas e peito branco, e uso meu bicão para pegar frutas na ponta dos galhos. Quem sou eu?',
+      'Durmo com o bico escondido nas costas, debaixo das asas, e moro no buraco das árvores. Quem sou eu?',
     ],
-    audiodescricao: 'Um bichinho de corpo redondo e achatado, coberto por uma casca dura, com duas pinças grandes na frente, olhos em cima de hastes e várias patas finas nas laterais.',
+    audiodescricao: 'Uma ave de penas pretas e peito branco, com um bico enorme, laranja e curvado.',
     libras: null,
-    imagem: 'assets/images/animais/caranguejo.svg',   // ou .png, se você converter
-    cor: 'linear-gradient(135deg,#FF7043,#BF360C)',
-    habitat: 'Manguezal',
-    tracos: { penas:false, pelo:false, casco:true, voa:false, nada:false, sobe:false, comeFrutas:false, comeCarne:false, comeInsetos:false },
-    curiosidade: 'O caranguejo vive no Manguezal! 🦀 Ele tem o esqueleto por fora do corpo e troca de casca quando cresce.',
+    imagem: 'assets/images/animais/tucano.png',
+    cor: 'linear-gradient(135deg,#FF6F00,#212121)',
+    habitat: 'Cerrado',
+    tracos: { penas:true, pelo:false, casco:false, voa:true, nada:false, sobe:true, comeFrutas:true, comeCarne:false, comeInsetos:true },
+    curiosidade: 'O tucano-toco vive no Cerrado! 🌾 Seu bico gigante ajuda a soltar o calor do corpo.',
+  },
+
+  jacare: {
+    id: 'jacare',
+    nome: 'Jacaré',
+    artigo: 'o',
+    emoji: '🐊',
+    som: 'assets/sounds/jacare.mp3',
+    tom: [147, 131, 147, 110, 98],
+    onomatopeia: 'Grrrom! Grrrom!',
+    charadas: [
+      'Tenho a boca comprida cheia de dentes, a pele dura cheia de placas e fico boiando parado no rio. Quem sou eu?',
+      'Fico deitado no sol para me esquentar, e na água só deixo os olhos e o nariz de fora. Quem sou eu?',
+      'Nasço de um ovo, tenho um rabo forte para nadar e sou parente dos dinossauros. Quem sou eu?',
+    ],
+    audiodescricao: 'Um réptil comprido e verde-escuro, de pele grossa com placas, boca longa cheia de dentes e rabo forte.',
+    libras: null,
+    imagem: 'assets/images/animais/jacare.png',
+    cor: 'linear-gradient(135deg,#33691E,#1B5E20)',
+    habitat: 'Pantanal',
+    // casco: a pele dele tem placas de osso, como a do tatu
+    tracos: { penas:false, pelo:false, casco:true, voa:false, nada:true, sobe:false, comeFrutas:false, comeCarne:true, comeInsetos:false },
+    curiosidade: 'O jacaré-do-pantanal vive no Pantanal! 💧 A temperatura do ninho decide se o filhote será macho ou fêmea.',
+  },
+
+  preguica: {
+    id: 'preguica',
+    nome: 'Bicho-Preguiça',
+    artigo: 'o',
+    emoji: '🦥',
+    som: 'assets/sounds/preguica.mp3',
+    tom: [784, 698, 659, 587, 523],
+    onomatopeia: 'Aiii... aiii...',
+    charadas: [
+      'Passo o dia pendurado de cabeça para baixo num galho e me mexo bem, bem devagarinho. Quem sou eu?',
+      'Tenho unhas compridas como ganchos, durmo muitas horas por dia e só desço da árvore uma vez por semana. Quem sou eu?',
+      'Meu pelo é tão parado que nasce uma plantinha verde nele, e eu como folhas lá no alto. Quem sou eu?',
+    ],
+    audiodescricao: 'Um animal peludo marrom-claro, de cara redonda e sorridente, pendurado num galho pelas unhas compridas.',
+    libras: null,
+    imagem: 'assets/images/animais/preguica.png',
+    cor: 'linear-gradient(135deg,#A1887F,#5D4037)',
+    habitat: 'Mata Atlântica',
+    // nada: no chão é lenta, mas na água a preguiça nada muito bem
+    tracos: { penas:false, pelo:true, casco:false, voa:false, nada:true, sobe:true, comeFrutas:false, comeCarne:false, comeInsetos:false },
+    curiosidade: 'O bicho-preguiça vive na Mata Atlântica! 🌿 Ele é tão devagar que nascem algas verdes no seu pelo.',
+  },
+
+  loboguara: {
+    id: 'loboguara',
+    nome: 'Lobo-Guará',
+    artigo: 'o',
+    emoji: '🐺',
+    som: 'assets/sounds/loboguara.mp3',
+    tom: [330, 247, 330, 247, 196],
+    onomatopeia: 'Uóóó! Uóóó!',
+    charadas: [
+      'Tenho o pelo laranja, as pernas pretas bem compridas e orelhas grandes para ouvir longe. Quem sou eu?',
+      'Pareço uma raposa de perna de pau e adoro comer a fruta chamada lobeira. Quem sou eu?',
+      'Ando sozinho de noite pelo campo, e minha foto já apareceu na nota de duzentos reais. Quem sou eu?',
+    ],
+    audiodescricao: 'Um animal parecido com um cachorro alto, de pelo laranja, pernas pretas e finas e orelhas grandes em pé.',
+    libras: null,
+    imagem: 'assets/images/animais/loboguara.png',
+    cor: 'linear-gradient(135deg,#EF6C00,#3E2723)',
+    habitat: 'Cerrado',
+    tracos: { penas:false, pelo:true, casco:false, voa:false, nada:false, sobe:false, comeFrutas:true, comeCarne:true, comeInsetos:true },
+    curiosidade: 'O lobo-guará vive no Cerrado! 🌾 Metade do que ele come são frutas, como a lobeira.',
+  },
+
+  boto: {
+    id: 'boto',
+    nome: 'Boto-Cor-de-Rosa',
+    artigo: 'o',
+    emoji: '🐬',
+    som: 'assets/sounds/boto.mp3',
+    tom: [1047, 1175, 1319, 1175, 1047],
+    onomatopeia: 'Fiiiu! Clic-clic!',
+    charadas: [
+      'Sou cor-de-rosa, vivo no rio e não no mar, e respiro por um buraquinho no alto da cabeça. Quem sou eu?',
+      'Tenho um focinho comprido e fino para pegar peixinhos no meio da água barrenta do rio. Quem sou eu?',
+      'Pareço um golfinho, mas moro nos rios da Amazônia, e existe uma lenda famosa sobre mim. Quem sou eu?',
+    ],
+    audiodescricao: 'Um animal liso e cor-de-rosa, parecido com um golfinho, de focinho longo e fino, nadando no rio.',
+    libras: null,
+    imagem: 'assets/images/animais/boto.png',
+    cor: 'linear-gradient(135deg,#F48FB1,#0277BD)',
+    habitat: 'Rio Amazonas',
+    // comeCarne: ele come peixes
+    tracos: { penas:false, pelo:false, casco:false, voa:false, nada:true, sobe:false, comeFrutas:false, comeCarne:true, comeInsetos:false },
+    curiosidade: 'O boto-cor-de-rosa vive nos rios da Amazônia! 🌊 Ele fica mais rosado quando está agitado.',
   },
 
 };
